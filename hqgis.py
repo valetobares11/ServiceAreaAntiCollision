@@ -1140,16 +1140,23 @@ class Hqgis:
                         print(e)
 
     
-    def containsFeature(self, lista_features, point_geometry):
+    def containsFeature(self, lista_features, point_geometry, coordenada_actual):
         for coordenada, array_feature in lista_features.items():
+            if coordenada != coordenada_actual:
                 for feature in array_feature:
                     geometry = feature.geometry()
                     if geometry.contains(point_geometry):
-                        # if coordenada not in self.lista_claves_por_expander:
-                        #     self.lista_claves_por_expander.append(coordenada)
+                        if coordenada not in self.lista_claves_por_expander:
+                            self.lista_claves_por_expander.append(coordenada)
+                        if coordenada_actual not in self.lista_claves_por_expander:
+                            self.lista_claves_por_expander.append(coordenada_actual)
+                        
                         return True
         
         return False
+    
+    def calculateTimeInit(self):
+        return 300
 
     def getIsochronesBatch(self):
         self.getCredentials()
@@ -1214,11 +1221,12 @@ class Hqgis:
         iface.messageBar().pushWidget(progressMessageBar, level=0)
         i = 0
         lista_features = {}
+        cantPoints = originLayer.featureCount()
         cortar_expansion = False
-        tiempo = 300
-        cantidad_solicitudes = 0
-        while ( (not cortar_expansion) and cantidad_solicitudes < 9):
-            tiempo = tiempo + 3
+        time = self.calculateTimeInit()
+        cantRequest = 0
+        while ( (not cortar_expansion) and cantRequest < 10):
+            time = time + 20 #VER ESTO
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
                 if layerCRS != QgsCoordinateReferenceSystem(4326):
@@ -1231,6 +1239,7 @@ class Hqgis:
                     x = originFeature.geometry().asPoint().x()
                     y = originFeature.geometry().asPoint().y()
                 coordinates = str(y) + "," + str(x)
+                print("lista de claves que faltan expandir {}".format(self.lista_claves_por_expander))
                 if (coordinates not in self.lista_claves_por_expander):
                     type = self.dlg.TypeBatch.currentText()
                     mode = self.dlg.TransportModeBatch.currentText()
@@ -1248,7 +1257,7 @@ class Hqgis:
                         + "&range[type]=time"
                         # + self.dlg.metricBatch.currentText().lower()
                         + "&range[values]="
-                        + ",".join([str(tiempo)])
+                        + ",".join([str(time)])
                         # + ",".join(intervalArray)
                         + "&routingMode="
                         + type
@@ -1273,7 +1282,7 @@ class Hqgis:
                         url += "&departureTime=any"
                     # print(url)
                     r = requests.get(url)
-                    cantidad_solicitudes = cantidad_solicitudes +1
+                    cantRequest = cantRequest +1
                     i += 1
                     progress.setValue(i)
                     iface.mainWindow().repaint()
@@ -1292,14 +1301,12 @@ class Hqgis:
                                                 lat = Point[0]
                                                 lng = Point[1]
                                                 p=QgsPointXY(lng, lat)
-                                                if(not self.containsFeature(lista_features, p)):
+                                                if(not self.containsFeature(lista_features, p, coordinates)):
                                                     vertices.append(p)
                                                 else:
-                                                    if coordinates not in self.lista_claves_por_expander:
-                                                        self.lista_claves_por_expander.append(coordinates)
-                                                    print("claves expansion: {}".format(self.lista_claves_por_expander))
-                                                    # if len(self.lista_claves_por_expander) == 3: 
-                                                    cortar_expansion = True
+                                                    if len(self.lista_claves_por_expander) == cantPoints:
+                                                        cortar_expansion = True
+                            
                                                     self.iface.messageBar().pushWarning('Warning', 'Poligono contiene punto')
                                             fet = QgsFeature()
                                             fet.setGeometry(
@@ -1313,19 +1320,20 @@ class Hqgis:
                                 lista_features[coordinates] = features
                                 if (cortar_expansion):
                                     pr = layer.dataProvider()
-                                    pr.addFeatures(features)
+                                    for coordenada, array_feature in lista_features.items():
+                                        pr.addFeatures(array_feature)
+
                                     if len(ranges) > 1:
                                         layer.setRenderer(renderer)
                                     layer.setOpacity(0.5)
                                     QgsProject.instance().addMapLayer(layer)
                             except Exception as e:
                                 print(e)
-                iface.messageBar().clearWidgets()
+            iface.messageBar().clearWidgets()
         
         # Al terminar el proceso
-        print("cantidad_solicitudes {} ".format(cantidad_solicitudes))
-        print("tiempo optimo: {} segundos".format(tiempo))
-        # print("cantidad puntos: {}".format(len(originLayer.getFeatures().list())))
+        print("cantRequest {} ".format(cantRequest))
+        print("time optimo: {} segundos".format(time))
 
     def run(self):
         """Run method that performs all the real work"""
