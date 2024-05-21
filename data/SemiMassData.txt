@@ -1,0 +1,50 @@
+PLZ	City	State	County	address
+12529	Schönefeld	Brandenburg	Landkreis Dahme-Spreewald	12529, Schönefeld, Landkreis Dahme-Spreewald, Brandenburg
+14461	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14461, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14467	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14467, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14469	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14469, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14471	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14471, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14473	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14473, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Fahrland	Brandenburg	Kreisfreie Stadt Potsdam	14476, Fahrland, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Satzkorn	Brandenburg	Kreisfreie Stadt Potsdam	14476, Satzkorn, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Töplitz	Brandenburg	Landkreis Potsdam-Mittelmark	14476, Töplitz, Landkreis Potsdam-Mittelmark, Brandenburg
+14476	Neu Fahrland	Brandenburg	Kreisfreie Stadt Potsdam	14476, Neu Fahrland, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Golm	Brandenburg	Kreisfreie Stadt Potsdam	14476, Golm, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Groß Glienicke	Brandenburg	Kreisfreie Stadt Potsdam	14476, Groß Glienicke, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Marquardt	Brandenburg	Kreisfreie Stadt Potsdam	14476, Marquardt, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Uetz-Paaren	Brandenburg	Kreisfreie Stadt Potsdam	14476, Uetz-Paaren, Kreisfreie Stadt Potsdam, Brandenburg
+14476	Seeburg	Brandenburg	Landkreis Havelland	14476, Seeburg, Landkreis Havelland, Brandenburg
+14478	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14478, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14480	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14480, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14482	Potsdam	Brandenburg	Kreisfreie Stadt Potsdam	14482, Potsdam, Kreisfreie Stadt Potsdam, Brandenburg
+14513	Teltow	Brandenburg	Landkreis Potsdam-Mittelmark	14513, Teltow, Landkreis Potsdam-Mittelmark, Brandenburg
+14532	Nudow	Brandenburg	Landkreis Potsdam-Mittelmark	14532, Nudow, Landkreis Potsdam-Mittelmark, Brandenburg
+14532	Fahlhorst	Brandenburg	Landkreis Potsdam-Mittelmark	14532, Fahlhorst, Landkreis Potsdam-Mittelmark, Brandenburg
+14532	Kleinmachnow	Brandenburg	Landkreis Potsdam-Mittelmark	14532, Kleinmachnow, Landkreis Potsdam-Mittelmark, Brandenburg
+14532	Philippsthal	Brandenburg	Landkreis Potsdam-Mittelmark	14532, Philippsthal, Landkreis Potsdam-Mittelmark, Brandenburg
+14532	Stahnsdorf	Brandenburg	Landkreis Potsdam-Mittelmark	14532, Stahnsdorf, Landkreis Potsdam-Mittelmark, Brandenburg
+14542	Werder (Havel)	Brandenburg	Landkreis Potsdam-Mittelmark	14542, Werder (Havel), Landkreis Potsdam-Mittelmark, Brandenburg
+14542	Kloster Lehnin	Brandenburg	Landkreis Potsdam-Mittelmark	14542, Kloster Lehnin, Landkreis Potsdam-Mittelmark, Brandenburg
+14542	Schwielowsee	Brandenburg	Landkreis Potsdam-Mittelmark	14542, Schwielowsee, Landkreis Potsdam-Mittelmark, Brandenburg
+14547	Stücken	Brandenburg	Landkreis Potsdam-Mittelmark	14547, Stücken, Landkreis Potsdam-Mittelmark, Brandenburg
+14547	Beelitz	Brandenburg	Landkreis Potsdam-Mittelmark	14547, Beelitz, Landkreis Potsdam-Mittelmark, Brandenburg
+14548	Schwielowsee	Brandenburg	Landkreis Potsdam-Mittelmark	14548, Schwielowsee, Landkreis Potsdam-Mittelmark, Brandenburg
+14550	Derwitz	Brandenburg	Landkreis Potsdam-Mittelmark	14550, Derwitz, Landkreis Potsdam-Mittelmark, Brandenburg
+14550	Deetz	Brandenburg	Landkreis Potsdam-Mittelmark	14550, Deetz, Landkreis Potsdam-Mittelmark, Brandenburg
+14550	Groß Kreutz	Brandenburg	Landkreis Potsdam-Mittelmark	14550, Groß Kreutz, Landkreis Potsdam-Mittelmark, Brandenburg
+14550	Schmergow	Brandenburg	Landkreis Potsdam-Mittelmark	14550, Schmergow, Landkreis Potsdam-Mittelmark, Brandenburg
+14550	Bochow	Brandenburg	Landkreis Potsdam-Mittelmark	14550, Bochow, Landkreis Potsdam-Mittelmark, Brandenburg
+14550	Krielow	Brandenburg	Landkreis Potsdam-Mittelmark	14550, Krielow, Landkreis Potsdam-Mittelmark, Brandenburg
+14552	Fresdorf	Brandenburg	Landkreis Potsdam-Mittelmark	14552, Fresdorf, Landkreis Potsdam-Mittelmark, Brandenburg
+14552	Saarmund	Brandenburg	Landkreis Potsdam-Mittelmark	14552, Saarmund, Landkreis Potsdam-Mittelmark, Brandenburg
+14552	Michendorf	Brandenburg	Landkreis Potsdam-Mittelmark	14552, Michendorf, Landkreis Potsdam-Mittelmark, Brandenburg
+14552	Tremsdorf	Brandenburg	Landkreis Potsdam-Mittelmark	14552, Tremsdorf, Landkreis Potsdam-Mittelmark, Brandenburg
+14552	Wildenbruch	Brandenburg	Landkreis Potsdam-Mittelmark	14552, Wildenbruch, Landkreis Potsdam-Mittelmark, Brandenburg
+14554	Seddiner See	Brandenburg	Landkreis Potsdam-Mittelmark	14554, Seddiner See, Landkreis Potsdam-Mittelmark, Brandenburg
+14557	Wilhelmshorst	Brandenburg	Landkreis Potsdam-Mittelmark	14557, Wilhelmshorst, Landkreis Potsdam-Mittelmark, Brandenburg
+14557	Langerwisch	Brandenburg	Landkreis Potsdam-Mittelmark	14557, Langerwisch, Landkreis Potsdam-Mittelmark, Brandenburg
+14558	Bergholz-Rehbrücke	Brandenburg	Landkreis Potsdam-Mittelmark	14558, Bergholz-Rehbrücke, Landkreis Potsdam-Mittelmark, Brandenburg
+14612	Falkensee	Brandenburg	Landkreis Havelland	14612, Falkensee, Landkreis Havelland, Brandenburg
+14621	Schönwalde	Brandenburg	Landkreis Havelland	14621, Schönwalde, Landkreis Havelland, Brandenburg
+14624	Dallgow-Döberitz	Brandenburg	Landkreis Havelland	14624, Dallgow-Döberitz, Landkreis Havelland, Brandenburg
+14627	Elstal	Brandenburg	Landkreis Havelland	14627, Elstal, Landkreis Havelland, Brandenburg
