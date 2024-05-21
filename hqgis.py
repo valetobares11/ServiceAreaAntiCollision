@@ -96,6 +96,7 @@ class Hqgis:
         self.getMapCoordinates = GetMapCoordinates(self.iface)
         self.getMapCoordTool = None
         self.lista_claves_por_expander = []
+        self.optimumTime = {}
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -1140,7 +1141,7 @@ class Hqgis:
                         print(e)
 
     
-    def containsFeature(self, lista_features, point_geometry, coordenada_actual):
+    def containsFeature(self, lista_features, point_geometry, coordenada_actual, time):
         for coordenada, array_feature in lista_features.items():
             if coordenada != coordenada_actual:
                 for feature in array_feature:
@@ -1148,9 +1149,11 @@ class Hqgis:
                     if geometry.contains(point_geometry):
                         if coordenada not in self.lista_claves_por_expander:
                             self.lista_claves_por_expander.append(coordenada)
+                            self.optimumTime[coordenada] = time
                         if coordenada_actual not in self.lista_claves_por_expander:
                             self.lista_claves_por_expander.append(coordenada_actual)
-                        
+                            self.optimumTime[coordenada_actual] = time
+
                         return True
         
         return False
@@ -1301,7 +1304,7 @@ class Hqgis:
                                                 lat = Point[0]
                                                 lng = Point[1]
                                                 p=QgsPointXY(lng, lat)
-                                                if(not self.containsFeature(lista_features, p, coordinates)):
+                                                if(not self.containsFeature(lista_features, p, coordinates, time)):
                                                     vertices.append(p)
                                                 else:
                                                     if len(self.lista_claves_por_expander) == cantPoints:
@@ -1333,7 +1336,8 @@ class Hqgis:
         
         # Al terminar el proceso
         print("cantRequest {} ".format(cantRequest))
-        print("time optimo: {} segundos".format(time))
+        for coordenada, tiempo in self.optimumTime.items():
+            print(" Punto {} con tiempo optimo: {}".format(coordenada, tiempo))
 
     def run(self):
         """Run method that performs all the real work"""
