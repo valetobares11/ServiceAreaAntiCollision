@@ -61,6 +61,7 @@ from qgis.PyQt.QtWidgets import QProgressBar
 from qgis.PyQt.QtCore import *
 from qgis.utils import iface
 from Hqgis.HqgisProvider import HqgisProvider
+import math
 
 
 class Hqgis:
@@ -1158,8 +1159,65 @@ class Hqgis:
         
         return False
     
-    def calculateTimeInit(self):
-        return 300
+    # Fórmula de Haversine para calcular la distancia entre dos puntos en la Tierra
+    def haversine(self,lat1, lon1, lat2, lon2):
+        R = 6371.0  # Radio de la Tierra en kilómetros
+
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+        distance = R * c
+        return distance
+    
+    # Convertir el tiempo de horas decimales a horas, minutos y segundos
+    def convertir_tiempo(self, tiempo_horas):
+        horas = int(tiempo_horas)
+        minutos_decimales = (tiempo_horas - horas) * 60
+        minutos = int(minutos_decimales)
+        segundos = int((minutos_decimales - minutos) * 60)
+        return horas, minutos, segundos
+    
+    def calculateTimeInit(self, originLayer, layerCRS):
+        # Velocidad en km/h (puedes cambiar esto según tu caso)
+        velocidad = 40.0  # km/h
+
+        # Armar lista de puntos (latitud, longitud)
+        points = []
+        originFeatures = originLayer.getFeatures()
+        for originFeature in originFeatures:
+            if layerCRS != QgsCoordinateReferenceSystem(4326):
+                sourceCrs = layerCRS
+                destCrs = QgsCoordinateReferenceSystem(4326)
+                tr = QgsCoordinateTransform(sourceCrs, destCrs, QgsProject.instance())
+                geom = originFeature.geometry()
+                newGeom = tr.transform(geom.asPoint())
+                x = newGeom.x()
+                y = newGeom.y()
+            else:
+                x = originFeature.geometry().asPoint().x()
+                y = originFeature.geometry().asPoint().y()
+            points.append((y, x))
+
+        # Calcular todas las distancias y los tiempos entre cada par de puntos
+        distances = []
+        for i in range(len(points)):
+            for j in range(i + 1, len(points)):
+                lat1, lon1 = points[i]
+                lat2, lon2 = points[j]
+                distance = self.haversine(lat1, lon1, lat2, lon2)
+                time = distance / velocidad
+                distances.append((i, j, distance, time))
+
+        # Encontrar la distancia con el tiempo más corto
+        shortest_distance = min(distances, key=lambda x: x[3])
+
+        # Obtener los índices de los puntos, la distancia y el tiempo más corto
+        i, j, min_distance, min_time = shortest_distance
+        horas, minutos, segundos = self.convertir_tiempo(min_time)
+
+        return horas*60*60 + minutos*60 + segundos
 
     def getIsochronesBatch(self):
         self.getCredentials()
@@ -1213,8 +1271,8 @@ class Hqgis:
         if layerCRS != QgsCoordinateReferenceSystem(4326):
             sourceCrs = layerCRS
             destCrs = QgsCoordinateReferenceSystem(4326)
-            tr = QgsCoordinateTransform(
-                sourceCrs, destCrs, QgsProject.instance())
+            tr = QgsCoordinateTransform(sourceCrs, destCrs, QgsProject.instance())
+
         progressMessageBar = iface.messageBar().createMessage(
             "Looping through " + str(originLayer.featureCount()) + " records ...")
         progress = QProgressBar()
@@ -1226,10 +1284,12 @@ class Hqgis:
         lista_features = {}
         cantPoints = originLayer.featureCount()
         cortar_expansion = False
-        time = self.calculateTimeInit()
+        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
+        avance = math.trunc(time/2)
+        print("tiempo calculado {}".format(time))
+        print("tiempo avance {}".format(avance))
         cantRequest = 0
-        while ( (not cortar_expansion) and cantRequest < 10):
-            time = time + 20 #VER ESTO
+        while ( (not cortar_expansion) and cantRequest < 12):
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
                 if layerCRS != QgsCoordinateReferenceSystem(4326):
@@ -1283,7 +1343,7 @@ class Hqgis:
                     else:
                         timestamp = None
                         url += "&departureTime=any"
-                    # print(url)
+                    
                     r = requests.get(url)
                     cantRequest = cantRequest +1
                     i += 1
@@ -1320,18 +1380,27 @@ class Hqgis:
                                             )
                                             features.append(fet)
                                             fid += 1
+                                
                                 lista_features[coordinates] = features
-                                if (cortar_expansion):
-                                    pr = layer.dataProvider()
-                                    for coordenada, array_feature in lista_features.items():
-                                        pr.addFeatures(array_feature)
-
-                                    if len(ranges) > 1:
-                                        layer.setRenderer(renderer)
-                                    layer.setOpacity(0.5)
-                                    QgsProject.instance().addMapLayer(layer)
+                                pr = layer.dataProvider()
+                                pr.addFeatures(features)
+                                if len(ranges) > 1:
+                                    layer.setRenderer(renderer)
+                                layer.setOpacity(0.5)
+                                QgsProject.instance().addMapLayer(layer)
+                                # if (cortar_expansion):
+                                #     pr = layer.dataProvider()
+                                #     for coordenada, array_feature in lista_features.items():
+                                #         pr.addFeatures(array_feature)
+                                    
+                                #     if len(ranges) > 1:
+                                #         layer.setRenderer(renderer)
+                                #     layer.setOpacity(0.5)
+                                #     QgsProject.instance().addMapLayer(layer)
                             except Exception as e:
                                 print(e)
+
+            time = time + 20 #VER ESTO                    
             iface.messageBar().clearWidgets()
         
         # Al terminar el proceso
