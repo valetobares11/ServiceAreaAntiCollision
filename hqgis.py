@@ -56,13 +56,16 @@ from qgis.core import (
     QgsField,
     QgsMessageLog,
     QgsNetworkAccessManager,
+    QgsProcessingFeatureSourceDefinition,
+    QgsProcessing,
+    QgsVectorLayerUtils,
     QgsSettings)
 from qgis.PyQt.QtWidgets import QProgressBar
 from qgis.PyQt.QtCore import *
 from qgis.utils import iface
 from Hqgis.HqgisProvider import HqgisProvider
 import math
-
+import processing  # Importar la librería de procesamiento
 
 class Hqgis:
     def __init__(self, iface):
@@ -1284,12 +1287,14 @@ class Hqgis:
         lista_features = {}
         cantPoints = originLayer.featureCount()
         cortar_expansion = False
-        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
-        avance = math.trunc(time/2)
+        # time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
+        time = 300
+        # avance = math.trunc(time/2)
         print("tiempo calculado {}".format(time))
-        print("tiempo avance {}".format(avance))
+        # print("tiempo avance {}".format(avance))
         cantRequest = 0
         while ( (not cortar_expansion) and cantRequest < 12):
+            time = time + 20 #VER ESTO
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
                 if layerCRS != QgsCoordinateReferenceSystem(4326):
@@ -1400,13 +1405,96 @@ class Hqgis:
                             except Exception as e:
                                 print(e)
 
-            time = time + 20 #VER ESTO                    
             iface.messageBar().clearWidgets()
         
         # Al terminar el proceso
-        print("cantRequest {} ".format(cantRequest))
-        for coordenada, tiempo in self.optimumTime.items():
-            print(" Punto {} con tiempo optimo: {}".format(coordenada, tiempo))
+        # print("cantRequest {} ".format(cantRequest))
+        # for coordenada, tiempo in self.optimumTime.items():
+        #     print(" Punto {} con tiempo optimo: {}".format(coordenada, tiempo))
+        
+
+        riocuarto_layer = QgsProject.instance().mapLayersByName("riocuarto")[0]
+        # Transformar las capas a EPSG:3857 (Web Mercator)
+        dest_crs = QgsCoordinateReferenceSystem('EPSG:3857')
+        transform_context = QgsProject.instance().transformContext()
+
+        def transform_layer(layer, dest_crs):
+            transformed_layer = processing.run('native:reprojectlayer', {
+                'INPUT': layer,
+                'TARGET_CRS': dest_crs,
+                'OUTPUT': 'memory:transformed'
+            })['OUTPUT']
+            return transformed_layer
+
+        riocuarto_transformed = transform_layer(riocuarto_layer, dest_crs)
+        areas_transformed = transform_layer(layer, dest_crs)
+
+        # Crear la intersección
+        params = {
+            'INPUT': areas_transformed,
+            'OVERLAY': riocuarto_transformed,
+            'OUTPUT': 'memory:'
+        }
+
+        result = processing.run('native:intersection', params)
+        intersected_layer = result['OUTPUT']
+
+        # Calcular el área de las intersecciones
+        intersected_layer.startEditing()
+        area_field_name = 'Area_Interseccion'
+        intersected_layer.dataProvider().addAttributes([QgsField(area_field_name, QVariant.Double)])
+        intersected_layer.updateFields()
+
+        area_index = intersected_layer.fields().indexFromName(area_field_name)
+
+        for feature in intersected_layer.getFeatures():
+            geom = feature.geometry()
+            area = geom.area()
+            feature[area_index] = area
+            intersected_layer.updateFeature(feature)
+
+        intersected_layer.commitChanges()
+
+        # Sumar el área total de las intersecciones
+        total_intersected_area = sum([feature[area_field_name] for feature in intersected_layer.getFeatures() if feature[area_field_name] is not None])
+        print(f"Área interseccion : {total_intersected_area}")
+
+        # Calcular el área total del área de servicio
+        riocuarto_transformed.startEditing()
+        servicio_area_field_name = 'Area_Servicio'
+        riocuarto_transformed.dataProvider().addAttributes([QgsField(servicio_area_field_name, QVariant.Double)])
+        riocuarto_transformed.updateFields()
+
+        servicio_area_index = riocuarto_transformed.fields().indexFromName(servicio_area_field_name)
+
+        for feature in riocuarto_transformed.getFeatures():
+            geom = feature.geometry()
+            if geom is None:
+                print(f"Advertencia: geometría nula en el feature ID {feature.id()}")
+                continue
+            area = geom.area()
+            if area == 0:
+                print(f"Advertencia: el área es 0 en el feature ID {feature.id()} con geometría {geom.asWkt()}")
+            feature[servicio_area_index] = area
+            riocuarto_transformed.updateFeature(feature)
+            print(f"Feature ID {feature.id()}, área: {area}")
+
+        riocuarto_transformed.commitChanges()
+
+        total_servicio_area = sum([feature[servicio_area_field_name] for feature in riocuarto_transformed.getFeatures() if feature[servicio_area_field_name] is not None])
+
+        print(f"Área total del área de servicio: {total_servicio_area}")
+
+        # Calcular el porcentaje de cobertura
+        if total_servicio_area > 0:
+            coverage_percentage = (total_intersected_area / total_servicio_area) * 100
+            print(f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
+        else:
+            print("El área total del área de servicio es 0, no se puede calcular el porcentaje de cobertura.")
+
+        
+
+
 
     def run(self):
         """Run method that performs all the real work"""
