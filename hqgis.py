@@ -1412,6 +1412,10 @@ class Hqgis:
         # for coordenada, tiempo in self.optimumTime.items():
         #     print(" Punto {} con tiempo optimo: {}".format(coordenada, tiempo))
         
+        layer = self.createIsoLayerBatch()
+        pr = layer.dataProvider()
+        for coordenada, feature in lista_features.items():
+            pr.addFeatures(feature)
 
         riocuarto_layer = QgsProject.instance().mapLayersByName("riocuarto")[0]
         # Transformar las capas a EPSG:3857 (Web Mercator)
