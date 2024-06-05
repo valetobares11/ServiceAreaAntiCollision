@@ -38,6 +38,9 @@ import requests
 import json
 import urllib
 import os
+from qgis.core import QgsProject, QgsVectorLayerSimpleLabeling, QgsPalLayerSettings, QgsTextFormat
+from PyQt5.QtGui import QFont
+
 from PyQt5.QtCore import QVariant, QDateTime
 from qgis.core import (
     QgsApplication,
@@ -1269,6 +1272,7 @@ class Hqgis:
                 else:
                     x = originFeature.geometry().asPoint().x()
                     y = originFeature.geometry().asPoint().y()
+                
                 coordinates = str(y) + "," + str(x)
                 # print("lista de claves que faltan expandir {}".format(self.lista_claves_por_expander))
                 if (coordinates not in self.lista_claves_por_expander):
@@ -1358,17 +1362,20 @@ class Hqgis:
             time = time + 20
             iface.messageBar().clearWidgets()
         
-        # Al terminar el proceso
+        capa_puntos = QgsProject.instance().mapLayersByName("capa_puntos")[0]
         
+        # Al terminar el proceso
         mensaje="\n Cantidad de request {} ".format(cantRequest)
         mensaje+= "\n\n"
         for coordenada, tiempo in self.optimumTime.items():
             minutos = tiempo // 60
             segundos_restantes = tiempo % 60
+            p =  QgsPointXY(float(coordenada.split(',')[1]), float(coordenada.split(',')[0]))
+            name = self.get_id_points(capa_puntos, p)
             if (segundos_restantes != 0):
-                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos y {} segundos".format(coordenada, minutos, segundos_restantes)
+                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos y {} segundos".format(name, minutos, segundos_restantes)
             else:
-                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos".format(coordenada, minutos)
+                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos".format(name, minutos)
         mensaje += "\n\n"
 
         
@@ -1463,7 +1470,18 @@ class Hqgis:
         dialog.setText(mensaje)
         dialog.exec()
 
-
+    def get_id_points(self, capa_puntos, point):
+        provider = capa_puntos.dataProvider()
+        features = provider.getFeatures()
+        # Iterar sobre los objetos e imprimirlos
+        for feature in features:
+            geometry = feature.geometry()
+            x = geometry.asPoint().x()
+            y = geometry.asPoint().y()
+            if point.x() == x and point.y() == y:
+                return feature.id()+1
+            
+        return -1
 
     def run(self):
         """Run method that performs all the real work"""
