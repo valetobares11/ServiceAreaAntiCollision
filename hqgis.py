@@ -23,7 +23,7 @@
 """
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QUrl
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QAction, QFileDialog
+from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox
 from PyQt5 import QtGui, QtWidgets, QtNetwork
 from functools import partial
 # Initialize Qt resources from file resources.py
@@ -1224,38 +1224,7 @@ class Hqgis:
 
     def getIsochronesBatch(self):
         self.getCredentials()
-        # getting intervals:
-        # if self.dlg.metricBatch.currentText() == "Time":
-        #     intervalArray = self.dlg.travelTimesBatch.text().split(",")
-        # else:
-        #     intervalArray = self.dlg.travelDistancesBatch.text().split(",")
-        # ranges = [int(x) for x in intervalArray]
-        ranges = [56]
-        # create colors:
         layer = self.createIsoLayerBatch()
-        if len(ranges) > 1:
-            ranges.sort()
-            rangediff = ranges[-1] - ranges[0]
-            sym = QgsSymbol.defaultSymbol(layer.geometryType())
-            rngs = []
-            sym.setColor(QColor(0, 255, 0, 255))
-            rng = QgsRendererRange(
-                0, ranges[0], sym, str(0) + " - " + str(ranges[0]))
-            rngs.append(rng)
-            for rangeItem in range(1, len(ranges) - 1):
-                sym = QgsSymbol.defaultSymbol(layer.geometryType())
-                sym.setColor(QColor(int(0 + ((255 / rangediff) * (ranges[rangeItem] - ranges[0]))), int(
-                    255 - ((255 / rangediff) * (ranges[rangeItem] - ranges[0]))), 0, 255))
-                rng = QgsRendererRange(ranges[rangeItem - 1] + 1, ranges[rangeItem], sym, str(
-                    ranges[rangeItem - 1] + 1) + " - " + str(ranges[rangeItem]))
-                rngs.append(rng)
-            sym = QgsSymbol.defaultSymbol(layer.geometryType())
-            sym.setColor(QColor(255, 0, 0, 255))
-            rng = QgsRendererRange(
-                ranges[-2] + 1, ranges[-1], sym, str(ranges[-2] + 1) + " - " + str(ranges[-1]))
-            rngs.append(rng)
-            field = "range"
-            renderer = QgsGraduatedSymbolRenderer(field, rngs)
         type = self.dlg.TypeBatch.currentText()
         mode = self.dlg.TransportModeBatch.currentText()
         if mode == 'public transport':
@@ -1269,7 +1238,6 @@ class Hqgis:
             self.iface.messageBar().pushWarning(
                 'Failed', 'Please convert MultiPoint layer to Point layer before usage')
             return
-        # originFeatures = originLayer.getFeatures()
         layerCRS = originLayer.crs()
         if layerCRS != QgsCoordinateReferenceSystem(4326):
             sourceCrs = layerCRS
@@ -1287,14 +1255,9 @@ class Hqgis:
         lista_features = {}
         cantPoints = originLayer.featureCount()
         cortar_expansion = False
-        # time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
-        time = 300
-        # avance = math.trunc(time/2)
-        print("tiempo calculado {}".format(time))
-        # print("tiempo avance {}".format(avance))
+        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
         cantRequest = 0
         while ( (not cortar_expansion) and cantRequest < 12):
-            time = time + 20 #VER ESTO
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
                 if layerCRS != QgsCoordinateReferenceSystem(4326):
@@ -1307,7 +1270,7 @@ class Hqgis:
                     x = originFeature.geometry().asPoint().x()
                     y = originFeature.geometry().asPoint().y()
                 coordinates = str(y) + "," + str(x)
-                print("lista de claves que faltan expandir {}".format(self.lista_claves_por_expander))
+                # print("lista de claves que faltan expandir {}".format(self.lista_claves_por_expander))
                 if (coordinates not in self.lista_claves_por_expander):
                     type = self.dlg.TypeBatch.currentText()
                     mode = self.dlg.TransportModeBatch.currentText()
@@ -1374,8 +1337,7 @@ class Hqgis:
                                                 else:
                                                     if len(self.lista_claves_por_expander) == cantPoints:
                                                         cortar_expansion = True
-                            
-                                                    self.iface.messageBar().pushWarning('Warning', 'Poligono contiene punto')
+
                                             fet = QgsFeature()
                                             fet.setGeometry(
                                                 QgsGeometry.fromPolygonXY([vertices]))
@@ -1389,28 +1351,26 @@ class Hqgis:
                                 lista_features[coordinates] = features
                                 pr = layer.dataProvider()
                                 pr.addFeatures(features)
-                                if len(ranges) > 1:
-                                    layer.setRenderer(renderer)
                                 layer.setOpacity(0.5)
                                 QgsProject.instance().addMapLayer(layer)
-                                # if (cortar_expansion):
-                                #     pr = layer.dataProvider()
-                                #     for coordenada, array_feature in lista_features.items():
-                                #         pr.addFeatures(array_feature)
-                                    
-                                #     if len(ranges) > 1:
-                                #         layer.setRenderer(renderer)
-                                #     layer.setOpacity(0.5)
-                                #     QgsProject.instance().addMapLayer(layer)
                             except Exception as e:
                                 print(e)
-
+            time = time + 20
             iface.messageBar().clearWidgets()
         
         # Al terminar el proceso
-        # print("cantRequest {} ".format(cantRequest))
-        # for coordenada, tiempo in self.optimumTime.items():
-        #     print(" Punto {} con tiempo optimo: {}".format(coordenada, tiempo))
+        
+        mensaje="\n Cantidad de request {} ".format(cantRequest)
+        mensaje+= "\n\n"
+        for coordenada, tiempo in self.optimumTime.items():
+            minutos = tiempo // 60
+            segundos_restantes = tiempo % 60
+            if (segundos_restantes != 0):
+                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos y {} segundos".format(coordenada, minutos, segundos_restantes)
+            else:
+                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos".format(coordenada, minutos)
+        mensaje += "\n\n"
+
         
         layer = self.createIsoLayerBatch()
         pr = layer.dataProvider()
@@ -1461,7 +1421,7 @@ class Hqgis:
 
         # Sumar el área total de las intersecciones
         total_intersected_area = sum([feature[area_field_name] for feature in intersected_layer.getFeatures() if feature[area_field_name] is not None])
-        print(f"Área interseccion : {total_intersected_area}")
+        # print(f"Área interseccion : {total_intersected_area}")
 
         # Calcular el área total del área de servicio
         riocuarto_transformed.startEditing()
@@ -1481,22 +1441,27 @@ class Hqgis:
                 print(f"Advertencia: el área es 0 en el feature ID {feature.id()} con geometría {geom.asWkt()}")
             feature[servicio_area_index] = area
             riocuarto_transformed.updateFeature(feature)
-            print(f"Feature ID {feature.id()}, área: {area}")
+            # print(f"Feature ID {feature.id()}, área: {area}")
 
         riocuarto_transformed.commitChanges()
 
         total_servicio_area = sum([feature[servicio_area_field_name] for feature in riocuarto_transformed.getFeatures() if feature[servicio_area_field_name] is not None])
 
-        print(f"Área total del área de servicio: {total_servicio_area}")
+        # print(f"Área total del área de servicio: {total_servicio_area}")
 
         # Calcular el porcentaje de cobertura
         if total_servicio_area > 0:
             coverage_percentage = (total_intersected_area / total_servicio_area) * 100
             print(f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
+            mensaje += (f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
         else:
             print("El área total del área de servicio es 0, no se puede calcular el porcentaje de cobertura.")
-
+            mensaje+="\n El área total del área de servicio es 0, no se puede calcular el porcentaje de cobertura."
         
+        dialog = QMessageBox()
+        dialog.setWindowTitle("Datos de la salida")
+        dialog.setText(mensaje)
+        dialog.exec()
 
 
 
