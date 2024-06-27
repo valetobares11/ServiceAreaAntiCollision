@@ -284,9 +284,9 @@ class Hqgis:
             # self.dlg.batchGeocodeFieldButton.setEnabled(True)
             # self.dlg.batchGeocodeFieldsButton.setEnabled(True)
             # self.dlg.calcRouteSingleButton.setEnabled(True)
-            # self.dlg.findPOISButton.setEnabled(True)
+            # self.dlg.findPOISButton.setEnabled(True)setEnabledsetEnabled
             # self.dlg.findPOISButtonBatch.setEnabled(True)
-        self.dlg.calcIsoButton.setEnabled(True)
+        # self.dlg.calcIsoButton.setEnabled(True)
         self.dlg.calcIsoButtonBatch.setEnabled(True)
         self.dlg.status2.setText("")
 
@@ -1228,11 +1228,6 @@ class Hqgis:
     def getIsochronesBatch(self):
         self.getCredentials()
         layer = self.createIsoLayerBatch()
-        type = self.dlg.TypeBatch.currentText()
-        mode = self.dlg.TransportModeBatch.currentText()
-        if mode == 'public transport':
-            mode = 'publicTransport'
-        traffic = self.dlg.trafficModeBatch.currentText()
         originLayer = self.dlg.IsoAddressBatch.currentLayer()
         # allow only regular point layers. no Multipoints
         if (originLayer.wkbType() == 4
@@ -1260,6 +1255,11 @@ class Hqgis:
         cortar_expansion = False
         time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
         cantRequest = 0
+        
+        mode = self.dlg.TransportModeBatch.currentText()
+        if mode == 'public transport':
+            mode = 'publicTransport'
+        
         while ( (not cortar_expansion) and cantRequest < 12):
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
@@ -1274,48 +1274,23 @@ class Hqgis:
                     y = originFeature.geometry().asPoint().y()
                 
                 coordinates = str(y) + "," + str(x)
-                # print("lista de claves que faltan expandir {}".format(self.lista_claves_por_expander))
                 if (coordinates not in self.lista_claves_por_expander):
-                    type = self.dlg.TypeBatch.currentText()
-                    mode = self.dlg.TransportModeBatch.currentText()
-                    traffic = self.dlg.trafficModeBatch.currentText()
-                    if mode == 'public transport':
-                        mode = 'publicTransport'
-                    if self.dlg.OriginDestinationBatch.currentText().lower() == "start":
-                        origin = "origin"
-                    else:
-                        origin = "destination"
                     url = (
-                        "https://isoline.router.hereapi.com/v8/isolines?" +
-                        origin + "="
+                        "https://isoline.router.hereapi.com/v8/isolines?origin="
                         + coordinates
                         + "&range[type]=time"
-                        # + self.dlg.metricBatch.currentText().lower()
                         + "&range[values]="
                         + ",".join([str(time)])
-                        # + ",".join(intervalArray)
-                        + "&routingMode="
-                        + type
+                        + "&routingMode=fast"
                         + "&transportMode="
                         + mode
                         + "&apiKey="
                         + self.appId
                     )
 
-                    if self.dlg.trafficModeBatch.currentText() == "enabled":
-                        if origin == "destination":
-                            timer = "arrivalTime"
-                        else:
-                            timer = "departureTime"
-                        # print(self.dlg.dateTimeEditBatch.dateTime())
-                        url += "&" + timer + "=" + \
-                            self.dlg.dateTimeEditBatch.dateTime().toString("yyyy-MM-dd'T'hh:mm:ss'Z'")
-                        time2 = self.dlg.dateTimeEditBatch.dateTime().toString("yyyyMMdd-hh:mm:ss")
-                        timestamp = QDateTime.fromString(time2, "yyyyMMdd-hh:mm:ss")
-                    else:
-                        timestamp = None
-                        url += "&departureTime=any"
-                    
+                    timestamp = None
+                    url += "&departureTime=any"
+                    print(url)
                     r = requests.get(url)
                     cantRequest = cantRequest +1
                     i += 1
@@ -1346,8 +1321,7 @@ class Hqgis:
                                             fet.setGeometry(
                                                 QgsGeometry.fromPolygonXY([vertices]))
                                             fet.setAttributes(
-                                                [fid, originFeature.id(), line["range"]["value"], self.dlg.metricBatch.currentText(
-                                                ).lower(), mode, traffic, timestamp, type]
+                                                [fid, originFeature.id(), line["range"]["value"], 'time', mode, 'disable', timestamp, 'fast']
                                             )
                                             features.append(fet)
                                             fid += 1
