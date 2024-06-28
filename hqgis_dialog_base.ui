@@ -104,59 +104,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
-      <attribute name="title">
-       <string>Credentials</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="2">
-          <widget class="QLineEdit" name="AppId">
-           <property name="placeholderText">
-            <string>s8788xpr_P_jIuTrlWUUC6f7afad_aRGyDqpWFfasNIg8</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>API Key</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="getCreds">
-         <property name="text">
-          <string>get credentials</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="saveCreds">
-         <property name="text">
-          <string>save credentials</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="loadCreds">
-         <property name="text">
-          <string>load credentials</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QTextBrowser" name="credentialInteraction">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
    <item>

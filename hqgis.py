@@ -40,7 +40,7 @@ import urllib
 import os
 from qgis.core import QgsProject, QgsVectorLayerSimpleLabeling, QgsPalLayerSettings, QgsTextFormat
 from PyQt5.QtGui import QFont
-
+from .api_key import API_KEY
 from PyQt5.QtCore import QVariant, QDateTime
 from qgis.core import (
     QgsApplication,
@@ -154,118 +154,10 @@ class Hqgis:
             text=self.tr(u'Access the HERE API'),
             callback=self.run,
             parent=self.iface.mainWindow())
-        self.loadCredFunction()
-        if self.dlg.AppId.text() == "":
-            self.dlg.status2.setText(
-                "No credentials in credentials tab found.")
-            self.dlg.geocodeAddressButton.setEnabled(False)
-            self.dlg.batchGeocodeFieldButton.setEnabled(False)
-            self.dlg.batchGeocodeFieldsButton.setEnabled(False)
-            self.dlg.calcRouteSingleButton.setEnabled(False)
-            self.dlg.findPOISButton.setEnabled(False)
-            self.dlg.findPOISButtonBatch.setEnabled(False)
-            self.dlg.calcIsoButton.setEnabled(False)
-            self.dlg.calcIsoButtonBatch.setEnabled(False)
-        self.dlg.AppId.editingFinished.connect(self.enableButtons)
-        # self.dlg.AppCode.editingFinished.connect(self.enableButtons)
-        self.dlg.getCreds.clicked.connect(self.getCredFunction)
-        self.dlg.saveCreds.clicked.connect(self.saveCredFunction)
-        self.dlg.loadCreds.clicked.connect(self.loadCredFunction)
-        # self.dlg.mapLayerBox.setAllowEmptyLayer(False)
-        # self.dlg.mapLayerBox.setFilters(QgsMapLayerProxyModel.VectorLayer)
-        # self.dlg.mapLayerBox.currentIndexChanged.connect(self.loadField)
-        # self.loadField()
-        # self.dlg.mapLayerBox_2.setAllowEmptyLayer(False)
-        # self.dlg.mapLayerBox_2.setFilters(QgsMapLayerProxyModel.VectorLayer)
-        # self.loadFields()
-
-        # self.dlg.mapLayerBox_2.currentIndexChanged.connect(self.loadFields)
-        # self.dlg.geocodeAddressButton.clicked.connect(self.geocode)
-        # self.dlg.batchGeocodeFieldButton.clicked.connect(
-        #     self.batchGeocodeField)
-        # self.dlg.batchGeocodeFieldsButton.clicked.connect(
-        #     self.batchGeocodeFields)
-        # self.dlg.FindPOISLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
-        self.dlg.IsoAddressBatch.setFilters(QgsMapLayerProxyModel.PointLayer)
-        # self.dlg.calcRouteSingleButton.clicked.connect(
-        #     self.calculateRouteSingle)
-
-        # coordButton
-        # Activate click tool in canvas.
-        # self.dlg.captureButton.setIcon(
-        #     QIcon(
-        #         os.path.join(
-        #             os.path.dirname(__file__),
-        #             "target.png")))
-        # self.dlg.captureButton_2.setIcon(
-        #     QIcon(
-        #         os.path.join(
-        #             os.path.dirname(__file__),
-        #             "target.png")))
-
-        # self.dlg.captureButton.setChecked(True)
-
-        # self.dlg.toAddress.editingFinished .connect(
-        #     partial(self.geocodeline, [self.dlg.toAddress, self.dlg.ToLabel]))
-        # self.dlg.captureButton.setChecked(True)
-        # self.getMapCoordTool = self.getMapCoordinates
-        # self.getMapCoordTool.setButton(self.dlg.captureButton)
-        # self.getMapCoordTool.setButton(self.dlg.captureButton_2)
-        # self.getMapCoordTool.setButton(self.dlg.captureButton_4)
-        # self.getMapCoordTool.setButton(self.dlg.captureButton_3)
-        # self.getMapCoordTool.setWidget(self.dlg)
-        # self.iface.mapCanvas().setMapTool(self.getMapCoordTool)
-        # self.dlg.captureButton.pressed.connect(self.setGetMapToolCoordFrom)
-        # self.dlg.captureButton_2.pressed.connect(self.setGetMapToolCoordTo)
-        # self.dlg.fromAddress.editingFinished.connect(
-        #     partial(self.geocodeline, [self.dlg.fromAddress, self.dlg.FromLabel]))
-        # self.dlg.captureButton_4.setIcon(
-        #     QIcon(
-        #         os.path.join(
-        #             os.path.dirname(__file__),
-        #             "target.png")))
-        # self.dlg.findPOISButton.setEnabled(False)
-        # self.dlg.captureButton_4.pressed.connect(self.setGetMapToolCoordPlace)
-        # self.dlg.captureButton_3.setIcon(
-        #     QIcon(
-        #         os.path.join(
-        #             os.path.dirname(__file__),
-        #             "target.png")))
-        # self.dlg.calcIsoButton.setEnabled(False)
-        # self.dlg.captureButton_3.pressed.connect(self.setGetMapToolCoordIso)
-
-        # self.dlg.findPOISButton.clicked.connect(self.getPlacesSingle)
-        # self.dlg.listWidget.sortItems(0)
-        # self.dlg.listWidget.itemSelectionChanged.connect(self.checkPlacesInput)
-        # self.dlg.findPOISButtonBatch.clicked.connect(self.getPlacesBatch)
-        # self.dlg.FindPOISLayer.setAllowEmptyLayer(False)
-        # self.dlg.FindPOISLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
-        # self.dlg.findPOISButtonBatch.setEnabled(False)
-        # self.dlg.listWidgetBatch.sortItems(0)
-        # self.dlg.listWidgetBatch.itemSelectionChanged.connect(
-        #     self.checkPlacesInputBatch)
-        # self.dlg.placesAddress.editingFinished.connect(
-        #     partial(
-        #         self.geocodeline, [
-        #             self.dlg.placesAddress, self.dlg.placeLabel, self.dlg.findPOISButton]))
-        # self.dlg.IsoAddress.editingFinished.connect(
-        #     partial(
-        #         self.geocodeline, [
-        #             self.dlg.IsoAddress, self.dlg.IsoLabel, self.dlg.calcIsoButton]))
-        # self.dlg.metric.currentTextChanged.connect(self.selectMetric)
-        # self.dlg.calcIsoButton.clicked.connect(self.getIsochronesSingle)
+        
         self.dlg.calcIsoButtonBatch.setEnabled(True)
-        # self.dlg.travelTimesBatch.editingFinished.connect(self.enableBatchISO)
-        # self.dlg.travelDistancesBatch.editingFinished.connect(
-        #     self.enableBatchISO)
-        # self.dlg.metricBatch.currentTextChanged.connect(self.selectMetricBatch)
         self.dlg.calcIsoButtonBatch.clicked.connect(self.getIsochronesBatch)
-        # self.dlg.trafficModeBatch.currentIndexChanged.connect(partial(
-        #     self.enableTime, [self.dlg.trafficModeBatch, self.dlg.dateTimeEditBatch]))
-        # self.dlg.trafficMode_2.currentIndexChanged.connect(
-        #     partial(self.enableTime, [self.dlg.trafficMode_2, self.dlg.dateTimeEdit_2]))
-        # self.dlg.trafficMode.currentIndexChanged.connect(
-        #     partial(self.enableTime, [self.dlg.trafficMode, self.dlg.dateTimeEdit]))
+        
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -279,14 +171,6 @@ class Hqgis:
         del self.toolbar
 
     def enableButtons(self):
-        # if self.dlg.AppId.text() != "":
-            # self.dlg.geocodeAddressButton.setEnabled(True)
-            # self.dlg.batchGeocodeFieldButton.setEnabled(True)
-            # self.dlg.batchGeocodeFieldsButton.setEnabled(True)
-            # self.dlg.calcRouteSingleButton.setEnabled(True)
-            # self.dlg.findPOISButton.setEnabled(True)setEnabledsetEnabled
-            # self.dlg.findPOISButtonBatch.setEnabled(True)
-        # self.dlg.calcIsoButton.setEnabled(True)
         self.dlg.calcIsoButtonBatch.setEnabled(True)
         self.dlg.status2.setText("")
 
@@ -728,8 +612,9 @@ class Hqgis:
         self.dlg.exec_()
 
     def getCredentials(self):
-        s = QgsSettings()
-        self.appId = s.value("HQGIS/api_key", None)
+        # s = QgsSettings()
+        # self.appId = s.value("HQGIS/api_key", None)
+        self.appId = API_KEY
 
     def getCredFunction(self):
         import webbrowser
@@ -749,30 +634,11 @@ class Hqgis:
             apikey = s.value("HQGIS/api_key", None)
             self.dlg.credentialInteraction.setText(
                 "credits used from QGIS global settings")
-            self.dlg.AppId.setText(apikey)
+            # self.dlg.AppId.setText(apikey)
+            self.dlg.AppId.setText(API_KEY)
         except BaseException:
             self.dlg.credentialInteraction.setText(
                 "no credits found in qgis global settings. Please check settings or save a new key")
-        # print(mytext)
-        # print(myint)
-        # print(myreal)
-        # print(nonexistent)
-        # fileLocation = QFileDialog.getOpenFileName(self.dlg, "JSON with credentials",os.path.dirname(os.path.realpath(__file__))+ os.sep + "creds", "JSON(*.JSON)")
-        # print(fileLocation)
-        # scriptDirectory = os.path.dirname(os.path.realpath(__file__))
-        # self.dlg.credentialInteraction.setText("")
-        # print(scriptDirectory)
-        # try:
-        #    import os
-        #    scriptDirectory = os.path.dirname(os.path.realpath(__file__))
-        #    with open(scriptDirectory + os.sep + 'creds' + os.sep + 'credentials.json') as f:
-        #        data = json.load(f)
-        #        self.dlg.AppId.setText(data["KEY"])
-        #        #self.dlg.AppCode.setText(data["CODE"])
-        #    self.dlg.credentialInteraction.setText("credits used from " + scriptDirectory + os.sep + 'creds' + os.sep + 'credentials.json')
-        # except:
-        #    self.dlg.credentialInteraction.setText("no credits found in. Check for file" + scriptDirectory + os.sep + 'creds' + os.sep + 'credentials.json')
-            # self.dlg.geocodeButton.setEnabled(False)
 
     def loadFields(self):
         self.dlg.CountryBox.setLayer(self.dlg.mapLayerBox_2.currentLayer())
