@@ -172,7 +172,7 @@ class Hqgis:
 
     def enableButtons(self):
         self.dlg.calcIsoButtonBatch.setEnabled(True)
-        self.dlg.status2.setText("")
+        #self.dlg.status2.setText("")
 
     def enableTime(self, lineEdits):
         if lineEdits[0].currentText() == "enabled":
