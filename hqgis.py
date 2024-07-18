@@ -40,7 +40,7 @@ import urllib
 import os
 from qgis.core import QgsProject, QgsVectorLayerSimpleLabeling, QgsPalLayerSettings, QgsTextFormat
 from PyQt5.QtGui import QFont
-from .api_key import API_KEY
+from .apikey import API_KEY
 from PyQt5.QtCore import QVariant, QDateTime
 from qgis.core import (
     QgsApplication,
@@ -102,7 +102,7 @@ class Hqgis:
         self.toolbar.setObjectName(u'Hqgis')
         self.getMapCoordinates = GetMapCoordinates(self.iface)
         self.getMapCoordTool = None
-        self.lista_claves_por_expander = []
+        self.keyListByExpander = []
         self.optimumTime = {}
 
     # noinspection PyMethodMayBeStatic
@@ -172,21 +172,15 @@ class Hqgis:
 
     def enableButtons(self):
         self.dlg.calcIsoButtonBatch.setEnabled(True)
-        #self.dlg.status2.setText("")
 
     def enableTime(self, lineEdits):
         if lineEdits[0].currentText() == "enabled":
             lineEdits[1].setEnabled(True)
-            print("time enabled")
-            # print(lineEdits[1].dateTime().toString("yyyy-MM-dd'T'hh:mm:ss'Z'"))
-            # 2019-01-28T02:27:52Z
-            # 2019-01-27T02:00:00Z
         else:
             lineEdits[1].setEnabled(False)
             print("time disabled")
 
     def enableBatchISO(self):
-        # if self.dlg.travelTimesBatch.text() != "" or self.dlg.travelDistancesBatch.text() != "":
         self.dlg.calcIsoButtonBatch.setEnabled(True)
 
     def convertGeocodeResponse(self, responseAddress):
@@ -612,8 +606,6 @@ class Hqgis:
         self.dlg.exec_()
 
     def getCredentials(self):
-        # s = QgsSettings()
-        # self.appId = s.value("HQGIS/api_key", None)
         self.appId = API_KEY
 
     def getCredFunction(self):
@@ -747,28 +739,6 @@ class Hqgis:
         except BaseException:
             print("routing")
 
-    # def geocodelinePlace(self):
-    #    self.getCredentials()
-    #    address = self.dlg.placesAddress.text()
-    #    self.dlg.findPOISButton.setEnabled(True)
-    #    print(self.dlg.findPOISButton.enabled())
-    #    if address != "":
-    #        url = "https://geocoder.ls.hereapi.com/search/6.2/geocode.json?apiKey=" + \
-    #            self.appId + "&searchtext=" + address
-    #        r = requests.get(url)
-    #        try:
-    #            # ass the response may hold more than one result we only use
-    #            # the best one:
-    #            responseAddress = json.loads(
-    #                r.text)["Response"]["View"][0]["Result"][0]
-    #            #geocodeResponse = self.convertGeocodeResponse(responseAddress)
-    #            lat = responseAddress["Location"]["DisplayPosition"]["Latitude"]
-    #            lng = responseAddress["Location"]["DisplayPosition"]["Longitude"]
-    #            self.dlg.placeLabel.setText(
-    #                str("%.5f" % lat) + ',' + str("%.5f" % lng))
-    #        except BaseException:
-    #            print("something went wrong")
-
     def checkPlacesInput(self):
         if self.dlg.placeLabel.text() != "" and len(
                 self.dlg.listWidget.selectedItems()) > 0:
@@ -804,8 +774,6 @@ class Hqgis:
         mode = self.dlg.TransportMode.currentText()
         if mode == "pedestrian" or mode == "bicycle":
             type = "fast"
-        # if mode == 'public transport':
-        #    mode = 'publicTransport'
         traffic = self.dlg.trafficMode.currentText()
         url = "https://router.hereapi.com/v8/routes?apiKey=" + self.appId + "&return=polyline,summary&routingMode=" + type + \
             "&transportMode=" + mode + "&origin=" + \
@@ -1014,42 +982,32 @@ class Hqgis:
                         print(e)
 
     
-    def containsFeature(self, lista_features, point_geometry, coordenada_actual, time):
-        for coordenada, array_feature in lista_features.items():
-            if coordenada != coordenada_actual:
-                for feature in array_feature:
+    def containsFeature(self, listFeatures, pointGeometry, currentCoordinate, time):
+        for coordenada, arrayFeature in listFeatures.items():
+            if coordenada != currentCoordinate:
+                for feature in arrayFeature:
                     geometry = feature.geometry()
-                    if geometry.contains(point_geometry):
-                        if coordenada not in self.lista_claves_por_expander:
-                            self.lista_claves_por_expander.append(coordenada)
+                    if geometry.contains(pointGeometry):
+                        if coordenada not in self.keyListByExpander:
+                            self.keyListByExpander.append(coordenada)
                             self.optimumTime[coordenada] = time
-                        if coordenada_actual not in self.lista_claves_por_expander:
-                            self.lista_claves_por_expander.append(coordenada_actual)
-                            self.optimumTime[coordenada_actual] = time
+                        if currentCoordinate not in self.keyListByExpander:
+                            self.keyListByExpander.append(currentCoordinate)
+                            self.optimumTime[currentCoordinate] = time
 
                         return True
         
         return False
     
-    # Fórmula de Haversine para calcular la distancia entre dos puntos en la Tierra
-    def haversine(self,lat1, lon1, lat2, lon2):
-        R = 6371.0  # Radio de la Tierra en kilómetros
 
-        dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lon2 - lon1)
-        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-        distance = R * c
-        return distance
     
-    # Convertir el tiempo de horas decimales a horas, minutos y segundos
-    def convertir_tiempo(self, tiempo_horas):
-        horas = int(tiempo_horas)
-        minutos_decimales = (tiempo_horas - horas) * 60
-        minutos = int(minutos_decimales)
-        segundos = int((minutos_decimales - minutos) * 60)
-        return horas, minutos, segundos
+    # Convertir el tiempo de hours Decimals a hours, minutes y seconds
+    def converTime(self, timeHours):
+        hours = int(timeHours)
+        minutesDecimals = (timeHours - hours) * 60
+        minutes = int(minutesDecimals)
+        seconds = int((minutesDecimals - minutes) * 60)
+        return hours, minutes, seconds
     
     def calculateTimeInit(self, originLayer, layerCRS):
         # Velocidad en km/h (puedes cambiar esto según tu caso)
@@ -1083,14 +1041,25 @@ class Hqgis:
                 distances.append((i, j, distance, time))
 
         # Encontrar la distancia con el tiempo más corto
-        shortest_distance = min(distances, key=lambda x: x[3])
+        shortestDistance = min(distances, key=lambda x: x[3])
 
         # Obtener los índices de los puntos, la distancia y el tiempo más corto
-        i, j, min_distance, min_time = shortest_distance
-        horas, minutos, segundos = self.convertir_tiempo(min_time)
+        i, j, min_distance, min_time = shortestDistance
+        hours, minutes, seconds = self.converTime(min_time)
 
-        return horas*60*60 + minutos*60 + segundos
+        return hours*60*60 + minutes*60 + seconds
 
+        # Fórmula de Haversine para calcular la distancia entre dos puntos en la Tierra
+    def haversine(self,lat1, lon1, lat2, lon2):
+        R = 6371.0  # Radio de la Tierra en kilómetros
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        distance = R * c
+
+        return distance
+    
     def getIsochronesBatch(self):
         self.getCredentials()
         layer = self.createIsoLayerBatch()
@@ -1116,17 +1085,17 @@ class Hqgis:
         progressMessageBar.layout().addWidget(progress)
         iface.messageBar().pushWidget(progressMessageBar, level=0)
         i = 0
-        lista_features = {}
+        listFeatures = {}
         cantPoints = originLayer.featureCount()
-        cortar_expansion = False
+        cutExpansion = False
         time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
+        print("time {}".format(time))
         cantRequest = 0
-        
         mode = self.dlg.TransportModeBatch.currentText()
         if mode == 'public transport':
             mode = 'publicTransport'
         
-        while ( (not cortar_expansion) and cantRequest < 12):
+        while ( (not cutExpansion) and cantRequest < 12):
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
                 if layerCRS != QgsCoordinateReferenceSystem(4326):
@@ -1140,14 +1109,14 @@ class Hqgis:
                     y = originFeature.geometry().asPoint().y()
                 
                 coordinates = str(y) + "," + str(x)
-                if (coordinates not in self.lista_claves_por_expander):
+                if (coordinates not in self.keyListByExpander):
                     url = (
                         "https://isoline.router.hereapi.com/v8/isolines?origin="
                         + coordinates
                         + "&range[type]=time"
                         + "&range[values]="
                         + ",".join([str(time)])
-                        + "&routingMode=fast"
+                        + "&routingMode=short"
                         + "&transportMode="
                         + mode
                         + "&apiKey="
@@ -1177,11 +1146,11 @@ class Hqgis:
                                                 lat = Point[0]
                                                 lng = Point[1]
                                                 p=QgsPointXY(lng, lat)
-                                                if(not self.containsFeature(lista_features, p, coordinates, time)):
+                                                if(not self.containsFeature(listFeatures, p, coordinates, time)):
                                                     vertices.append(p)
                                                 else:
-                                                    if len(self.lista_claves_por_expander) == cantPoints:
-                                                        cortar_expansion = True
+                                                    if len(self.keyListByExpander) == cantPoints:
+                                                        cutExpansion = True
 
                                             fet = QgsFeature()
                                             fet.setGeometry(
@@ -1192,7 +1161,7 @@ class Hqgis:
                                             features.append(fet)
                                             fid += 1
                                 
-                                lista_features[coordinates] = features
+                                listFeatures[coordinates] = features
                                 pr = layer.dataProvider()
                                 pr.addFeatures(features)
                                 layer.setOpacity(0.5)
@@ -1202,83 +1171,82 @@ class Hqgis:
             time = time + 20
             iface.messageBar().clearWidgets()
         
-        capa_puntos = QgsProject.instance().mapLayersByName("capa_puntos")[0]
+        layerPoints = QgsProject.instance().mapLayersByName("capa_puntos")[0]
         
         # Al terminar el proceso
         mensaje="\n Cantidad de request {} ".format(cantRequest)
         mensaje+= "\n\n"
         for coordenada, tiempo in self.optimumTime.items():
-            minutos = tiempo // 60
-            segundos_restantes = tiempo % 60
+            minutes = tiempo // 60
+            secondsRestants = tiempo % 60
             p =  QgsPointXY(float(coordenada.split(',')[1]), float(coordenada.split(',')[0]))
-            name = self.get_id_points(capa_puntos, p)
-            if (segundos_restantes != 0):
-                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos y {} segundos".format(name, minutos, segundos_restantes)
+            name = self.getIdPoints(layerPoints, p)
+            if (secondsRestants != 0):
+                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutes y {} seconds".format(name, minutes, secondsRestants)
             else:
-                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutos".format(name, minutos)
+                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutes".format(name, minutes)
         mensaje += "\n\n"
 
         
         layer = self.createIsoLayerBatch()
         pr = layer.dataProvider()
-        for coordenada, feature in lista_features.items():
+        for coordenada, feature in listFeatures.items():
             pr.addFeatures(feature)
 
-        riocuarto_layer = QgsProject.instance().mapLayersByName("riocuarto")[0]
+        cityLayer = QgsProject.instance().mapLayersByName("riocuarto")[0]
         # Transformar las capas a EPSG:3857 (Web Mercator)
-        dest_crs = QgsCoordinateReferenceSystem('EPSG:3857')
-        transform_context = QgsProject.instance().transformContext()
-
-        def transform_layer(layer, dest_crs):
+        destCrs = QgsCoordinateReferenceSystem('EPSG:3857')
+        def transformLayer(layer, destCrs):
             transformed_layer = processing.run('native:reprojectlayer', {
                 'INPUT': layer,
-                'TARGET_CRS': dest_crs,
+                'TARGET_CRS': destCrs,
                 'OUTPUT': 'memory:transformed'
             })['OUTPUT']
+            
             return transformed_layer
 
-        riocuarto_transformed = transform_layer(riocuarto_layer, dest_crs)
-        areas_transformed = transform_layer(layer, dest_crs)
+        cityTransformed = transformLayer(cityLayer, destCrs)
+        areas_transformed = transformLayer(layer, destCrs)
 
         # Crear la intersección
         params = {
             'INPUT': areas_transformed,
-            'OVERLAY': riocuarto_transformed,
+            'OVERLAY': cityTransformed,
             'OUTPUT': 'memory:'
         }
 
         result = processing.run('native:intersection', params)
-        intersected_layer = result['OUTPUT']
+        intersectedLayer = result['OUTPUT']
 
         # Calcular el área de las intersecciones
-        intersected_layer.startEditing()
+        intersectedLayer.startEditing()
         area_field_name = 'Area_Interseccion'
-        intersected_layer.dataProvider().addAttributes([QgsField(area_field_name, QVariant.Double)])
-        intersected_layer.updateFields()
+        intersectedLayer.dataProvider().addAttributes([QgsField(area_field_name, QVariant.Double)])
+        intersectedLayer.updateFields()
 
-        area_index = intersected_layer.fields().indexFromName(area_field_name)
+        area_index = intersectedLayer.fields().indexFromName(area_field_name)
 
-        for feature in intersected_layer.getFeatures():
+        for feature in intersectedLayer.getFeatures():
             geom = feature.geometry()
             area = geom.area()
             feature[area_index] = area
-            intersected_layer.updateFeature(feature)
+            intersectedLayer.updateFeature(feature)
 
-        intersected_layer.commitChanges()
+        intersectedLayer.commitChanges()
 
         # Sumar el área total de las intersecciones
-        total_intersected_area = sum([feature[area_field_name] for feature in intersected_layer.getFeatures() if feature[area_field_name] is not None])
+        total_intersected_area = sum([feature[area_field_name] for feature in intersectedLayer.getFeatures() if feature[area_field_name] is not None])
         # print(f"Área interseccion : {total_intersected_area}")
 
         # Calcular el área total del área de servicio
-        riocuarto_transformed.startEditing()
+        cityTransformed.startEditing()
         servicio_area_field_name = 'Area_Servicio'
-        riocuarto_transformed.dataProvider().addAttributes([QgsField(servicio_area_field_name, QVariant.Double)])
-        riocuarto_transformed.updateFields()
+        cityTransformed.dataProvider().addAttributes([QgsField(servicio_area_field_name, QVariant.Double)])
+        cityTransformed.updateFields()
 
-        servicio_area_index = riocuarto_transformed.fields().indexFromName(servicio_area_field_name)
+        servicio_area_index = cityTransformed.fields().indexFromName(servicio_area_field_name)
 
-        for feature in riocuarto_transformed.getFeatures():
+        for feature in cityTransformed.getFeatures():
             geom = feature.geometry()
             if geom is None:
                 print(f"Advertencia: geometría nula en el feature ID {feature.id()}")
@@ -1287,12 +1255,12 @@ class Hqgis:
             if area == 0:
                 print(f"Advertencia: el área es 0 en el feature ID {feature.id()} con geometría {geom.asWkt()}")
             feature[servicio_area_index] = area
-            riocuarto_transformed.updateFeature(feature)
+            cityTransformed.updateFeature(feature)
             # print(f"Feature ID {feature.id()}, área: {area}")
 
-        riocuarto_transformed.commitChanges()
+        cityTransformed.commitChanges()
 
-        total_servicio_area = sum([feature[servicio_area_field_name] for feature in riocuarto_transformed.getFeatures() if feature[servicio_area_field_name] is not None])
+        total_servicio_area = sum([feature[servicio_area_field_name] for feature in cityTransformed.getFeatures() if feature[servicio_area_field_name] is not None])
 
         # print(f"Área total del área de servicio: {total_servicio_area}")
 
@@ -1310,8 +1278,8 @@ class Hqgis:
         dialog.setText(mensaje)
         dialog.exec()
 
-    def get_id_points(self, capa_puntos, point):
-        provider = capa_puntos.dataProvider()
+    def getIdPoints(self, layerPoints, point):
+        provider = layerPoints.dataProvider()
         features = provider.getFeatures()
         # Iterar sobre los objetos e imprimirlos
         for feature in features:
