@@ -102,7 +102,7 @@ class Hqgis:
         self.toolbar.setObjectName(u'Hqgis')
         self.getMapCoordinates = GetMapCoordinates(self.iface)
         self.getMapCoordTool = None
-        self.keyListByExpander = []
+        self.listOfExpandedPoints = []
         self.optimumTime = {}
 
     # noinspection PyMethodMayBeStatic
@@ -988,11 +988,11 @@ class Hqgis:
                 for feature in arrayFeature:
                     geometry = feature.geometry()
                     if geometry.contains(pointGeometry):
-                        if coordenada not in self.keyListByExpander:
-                            self.keyListByExpander.append(coordenada)
+                        if coordenada not in self.listOfExpandedPoints:
+                            self.listOfExpandedPoints.append(coordenada)
                             self.optimumTime[coordenada] = time
-                        if currentCoordinate not in self.keyListByExpander:
-                            self.keyListByExpander.append(currentCoordinate)
+                        if currentCoordinate not in self.listOfExpandedPoints:
+                            self.listOfExpandedPoints.append(currentCoordinate)
                             self.optimumTime[currentCoordinate] = time
 
                         return True
@@ -1010,10 +1010,7 @@ class Hqgis:
         return hours, minutes, seconds
     
     def calculateTimeInit(self, originLayer, layerCRS):
-        # Velocidad en km/h (puedes cambiar esto según tu caso)
-        velocidad = 40.0  # km/h
-
-        # Armar lista de puntos (latitud, longitud)
+        speed = 40.0  # km/h
         points = []
         originFeatures = originLayer.getFeatures()
         for originFeature in originFeatures:
@@ -1037,7 +1034,7 @@ class Hqgis:
                 lat1, lon1 = points[i]
                 lat2, lon2 = points[j]
                 distance = self.haversine(lat1, lon1, lat2, lon2)
-                time = distance / velocidad
+                time = distance / speed
                 distances.append((i, j, distance, time))
 
         # Encontrar la distancia con el tiempo más corto
@@ -1088,7 +1085,7 @@ class Hqgis:
         listFeatures = {}
         cantPoints = originLayer.featureCount()
         cutExpansion = False
-        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)))
+        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)/2))
         print("time {}".format(time))
         cantRequest = 0
         mode = self.dlg.TransportModeBatch.currentText()
@@ -1109,7 +1106,7 @@ class Hqgis:
                     y = originFeature.geometry().asPoint().y()
                 
                 coordinates = str(y) + "," + str(x)
-                if (coordinates not in self.keyListByExpander):
+                if (coordinates not in self.listOfExpandedPoints):
                     url = (
                         "https://isoline.router.hereapi.com/v8/isolines?origin="
                         + coordinates
@@ -1125,7 +1122,7 @@ class Hqgis:
 
                     timestamp = None
                     url += "&departureTime=any"
-                    print(url)
+                    # print(url)
                     r = requests.get(url)
                     cantRequest = cantRequest +1
                     i += 1
@@ -1149,7 +1146,7 @@ class Hqgis:
                                                 if(not self.containsFeature(listFeatures, p, coordinates, time)):
                                                     vertices.append(p)
                                                 else:
-                                                    if len(self.keyListByExpander) == cantPoints:
+                                                    if len(self.listOfExpandedPoints) == cantPoints:
                                                         cutExpansion = True
 
                                             fet = QgsFeature()
@@ -1168,24 +1165,32 @@ class Hqgis:
                                 QgsProject.instance().addMapLayer(layer)
                             except Exception as e:
                                 print(e)
-            time = time + 20
-            iface.messageBar().clearWidgets()
-        
-        layerPoints = QgsProject.instance().mapLayersByName("capa_puntos")[0]
-        
+            try:
+                # expansion en segundos
+                timeExpantion = self.getTimeTheExpantion(listFeatures, layer)
+                print("tiempo de avance calculado {}".format(timeExpantion))
+                time = time + math.trunc((timeExpantion))
+                # time = time + 20
+                print("tiempo : {}".format(time))
+                iface.messageBar().clearWidgets()
+            except Exception as e:
+                print(e)
+                print("Error al calcular el tiempo de avance")
+
+        layerPoints = self.dlg.IsoAddressBatch.currentLayer()
         # Al terminar el proceso
-        mensaje="\n Cantidad de request {} ".format(cantRequest)
-        mensaje+= "\n\n"
+        message="\n Cantidad de request {} ".format(cantRequest)
+        message+= "\n\n"
         for coordenada, tiempo in self.optimumTime.items():
             minutes = tiempo // 60
             secondsRestants = tiempo % 60
             p =  QgsPointXY(float(coordenada.split(',')[1]), float(coordenada.split(',')[0]))
             name = self.getIdPoints(layerPoints, p)
             if (secondsRestants != 0):
-                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutes y {} seconds".format(name, minutes, secondsRestants)
+                message+="\n\n  Punto {} con tiempo optimo: {} minutes y {} seconds".format(name, minutes, secondsRestants)
             else:
-                mensaje+="\n\n  Punto {} con tiempo optimo: {} minutes".format(name, minutes)
-        mensaje += "\n\n"
+                message+="\n\n  Punto {} con tiempo optimo: {} minutes".format(name, minutes)
+        message += "\n\n"
 
         
         layer = self.createIsoLayerBatch()
@@ -1195,7 +1200,7 @@ class Hqgis:
 
         cityLayer = QgsProject.instance().mapLayersByName("riocuarto")[0]
         # Transformar las capas a EPSG:3857 (Web Mercator)
-        destCrs = QgsCoordinateReferenceSystem('EPSG:3857')
+        destCrs = QgsCoordinateReferenceSystem('EPSG:5347')
         def transformLayer(layer, destCrs):
             transformed_layer = processing.run('native:reprojectlayer', {
                 'INPUT': layer,
@@ -1206,11 +1211,11 @@ class Hqgis:
             return transformed_layer
 
         cityTransformed = transformLayer(cityLayer, destCrs)
-        areas_transformed = transformLayer(layer, destCrs)
+        areasTransformed = transformLayer(layer, destCrs)
 
         # Crear la intersección
         params = {
-            'INPUT': areas_transformed,
+            'INPUT': areasTransformed,
             'OVERLAY': cityTransformed,
             'OUTPUT': 'memory:'
         }
@@ -1235,16 +1240,16 @@ class Hqgis:
         intersectedLayer.commitChanges()
 
         # Sumar el área total de las intersecciones
-        total_intersected_area = sum([feature[area_field_name] for feature in intersectedLayer.getFeatures() if feature[area_field_name] is not None])
-        # print(f"Área interseccion : {total_intersected_area}")
+        totalIntersectedArea = sum([feature[area_field_name] for feature in intersectedLayer.getFeatures() if feature[area_field_name] is not None])
+        # print(f"Área interseccion : {totalIntersectedArea}")
 
         # Calcular el área total del área de servicio
         cityTransformed.startEditing()
-        servicio_area_field_name = 'Area_Servicio'
-        cityTransformed.dataProvider().addAttributes([QgsField(servicio_area_field_name, QVariant.Double)])
+        serviceAreaFieldName = 'Area_Servicio'
+        cityTransformed.dataProvider().addAttributes([QgsField(serviceAreaFieldName, QVariant.Double)])
         cityTransformed.updateFields()
 
-        servicio_area_index = cityTransformed.fields().indexFromName(servicio_area_field_name)
+        servicio_area_index = cityTransformed.fields().indexFromName(serviceAreaFieldName)
 
         for feature in cityTransformed.getFeatures():
             geom = feature.geometry()
@@ -1260,28 +1265,64 @@ class Hqgis:
 
         cityTransformed.commitChanges()
 
-        total_servicio_area = sum([feature[servicio_area_field_name] for feature in cityTransformed.getFeatures() if feature[servicio_area_field_name] is not None])
+        totalServiceArea = sum([feature[serviceAreaFieldName] for feature in cityTransformed.getFeatures() if feature[serviceAreaFieldName] is not None])
 
-        # print(f"Área total del área de servicio: {total_servicio_area}")
+        # print(f"Área total del área de servicio: {totalServiceArea}")
 
         # Calcular el porcentaje de cobertura
-        if total_servicio_area > 0:
-            coverage_percentage = (total_intersected_area / total_servicio_area) * 100
+        if totalServiceArea > 0:
+            coverage_percentage = (totalIntersectedArea / totalServiceArea) * 100
             print(f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
-            mensaje += (f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
+            message += (f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
         else:
             print("El área total del área de servicio es 0, no se puede calcular el porcentaje de cobertura.")
-            mensaje+="\n El área total del área de servicio es 0, no se puede calcular el porcentaje de cobertura."
+            message+="\n El área total del área de servicio es 0, no se puede calcular el porcentaje de cobertura."
         
         dialog = QMessageBox()
         dialog.setWindowTitle("Datos de la salida")
-        dialog.setText(mensaje)
+        dialog.setText(message)
         dialog.exec()
+
+    def getTimeTheExpantion(self, listFeatures, layer):
+        layerPoints = self.dlg.IsoAddressBatch.currentLayer()
+        distanceMin = float('inf')
+        crs1 = layer.crs()
+        print(f"CRS de la capa 1: {crs1.authid()}")
+        crsProjected = QgsCoordinateReferenceSystem("EPSG:5347")
+        transform1 = QgsCoordinateTransform(crs1, crsProjected, QgsProject.instance()) if crs1.isGeographic() else None
+        arrayTuples = []
+        for coordenada, arrayFeature in listFeatures.items():
+            for coordenada2, arrayFeature2 in listFeatures.items():
+                tuple1 = (coordenada, coordenada2)
+                if (coordenada != coordenada2 and tuple1 not in arrayTuples):
+                    arrayTuples.append((coordenada, coordenada2))
+                    arrayTuples.append((coordenada2, coordenada))
+                    feature = arrayFeature[0]
+                    poly1 = feature.geometry()
+                    feature2 = arrayFeature2[0]
+                    poly2 = feature2.geometry()
+                    if transform1:
+                        poly1.transform(transform1)
+                        poly2.transform(transform1)
+
+                    p1 =  QgsPointXY(float(coordenada.split(',')[1]), float(coordenada.split(',')[0]))
+                    name1 = self.getIdPoints(layerPoints, p1)
+                    p2 =  QgsPointXY(float(coordenada2.split(',')[1]), float(coordenada2.split(',')[0]))
+                    name2 = self.getIdPoints(layerPoints, p2)
+                    distance = poly1.distance(poly2)
+                    print("distancia {} de expansion {} con {}".format(distance, name1, name2))
+                    if (distance < distanceMin and distance > 1):
+                        distanceMin = distance
+        
+        speed = 40.0
+        time = (distanceMin / 1000) / speed
+        hours, minutes, seconds = self.converTime(time)
+        return hours*60*60 + minutes*60 + seconds
+
 
     def getIdPoints(self, layerPoints, point):
         provider = layerPoints.dataProvider()
         features = provider.getFeatures()
-        # Iterar sobre los objetos e imprimirlos
         for feature in features:
             geometry = feature.geometry()
             x = geometry.asPoint().x()
