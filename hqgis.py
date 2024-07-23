@@ -1085,7 +1085,7 @@ class Hqgis:
         listFeatures = {}
         cantPoints = originLayer.featureCount()
         cutExpansion = False
-        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)/2))
+        time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)/3)) 
         print("time {}".format(time))
         cantRequest = 0
         mode = self.dlg.TransportModeBatch.currentText()
@@ -1272,6 +1272,7 @@ class Hqgis:
         # Calcular el porcentaje de cobertura
         if totalServiceArea > 0:
             coverage_percentage = (totalIntersectedArea / totalServiceArea) * 100
+            if coverage_percentage > 100 : coverage_percentage=100
             print(f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
             message += (f"El porcentaje de cobertura es: {coverage_percentage:.2f}%")
         else:
@@ -1311,10 +1312,12 @@ class Hqgis:
                     name2 = self.getIdPoints(layerPoints, p2)
                     distance = poly1.distance(poly2)
                     print("distancia {} de expansion {} con {}".format(distance, name1, name2))
-                    if (distance < distanceMin and distance > 1):
+                    if (distance < distanceMin and distance > 0):
                         distanceMin = distance
         
         speed = 40.0
+        if distanceMin == float('inf') :
+            distanceMin=0
         time = (distanceMin / 1000) / speed
         hours, minutes, seconds = self.converTime(time)
         return hours*60*60 + minutes*60 + seconds
