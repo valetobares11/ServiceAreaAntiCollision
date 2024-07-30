@@ -974,7 +974,6 @@ class Hqgis:
                                 ";".join(categoriesResp)
                             ])
                             features.append(fet)
-                        print(features)
                         pr = layer.dataProvider()
                         pr.addFeatures(features)
                         QgsProject.instance().addMapLayer(layer)
@@ -1084,15 +1083,15 @@ class Hqgis:
         i = 0
         listFeatures = {}
         cantPoints = originLayer.featureCount()
+        cotaMax = cantPoints * 5
         cutExpansion = False
         time = math.trunc((self.calculateTimeInit(originLayer, layerCRS)/3)) 
-        print("time {}".format(time))
         cantRequest = 0
         mode = self.dlg.TransportModeBatch.currentText()
         if mode == 'public transport':
             mode = 'publicTransport'
         
-        while ( (not cutExpansion) and cantRequest < 12):
+        while ( (not cutExpansion) and cantRequest < cotaMax):
             originFeatures = originLayer.getFeatures()
             for originFeature in originFeatures:
                 if layerCRS != QgsCoordinateReferenceSystem(4326):
@@ -1145,6 +1144,7 @@ class Hqgis:
                                                 p=QgsPointXY(lng, lat)
                                                 if(not self.containsFeature(listFeatures, p, coordinates, time)):
                                                     vertices.append(p)
+                                                    self.optimumTime[coordinates] = time
                                                 else:
                                                     if len(self.listOfExpandedPoints) == cantPoints:
                                                         cutExpansion = True
@@ -1168,10 +1168,8 @@ class Hqgis:
             try:
                 # expansion en segundos
                 timeExpantion = self.getTimeTheExpantion(listFeatures, layer)
-                print("tiempo de avance calculado {}".format(timeExpantion))
                 time = time + math.trunc((timeExpantion))
                 # time = time + 20
-                print("tiempo : {}".format(time))
                 iface.messageBar().clearWidgets()
             except Exception as e:
                 print(e)
