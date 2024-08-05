@@ -2,9 +2,9 @@
 
 """
 /***************************************************************************
- HqgisAlgorithm
+  Service Area Anti Collision Algorithm
                                  A QGIS plugin
- Processing plugin for Hqgis
+ Processing plugin for ServiceAreaAntiCollision
                               -------------------
         begin                : 2019-02-06
         copyright            : (C) 2019 by Riccardo Klinger
@@ -23,9 +23,9 @@
 
 from qgis.core import QgsProcessingProvider
 from processing.core.ProcessingConfig import Setting, ProcessingConfig
-from .HqgisAlgorithm_geocode import geocodeList
-from .HqgisAlgorithm_isochrone import isochroneList
-from .HqgisAlgorithm_POIs import getPois
+from .ServiceAreaAntiCollisionAlgorithm_geocode import geocodeList
+from .ServiceAreaAntiCollisionAlgorithm_isochrone import isochroneList
+from .ServiceAreaAntiCollisionAlgorithm_POIs import getPois
 
 __author__ = 'Riccardo Klinger'
 __date__ = '2020-03-04'
@@ -36,7 +36,7 @@ __copyright__ = '(C) 2020 Riccardo Klinger'
 __revision__ = '$Format:%H$'
 
 
-class HqgisProvider(QgsProcessingProvider):
+class ServiceAreaAntiCollisionProvider(QgsProcessingProvider):
 
     def __init__(self):
         QgsProcessingProvider.__init__(self)
@@ -58,12 +58,12 @@ class HqgisProvider(QgsProcessingProvider):
         It is also used to create the command line name of all the
         algorithms from this provider.
         """
-        return 'Hqgis'
+        return 'ServiceAreaAntiCollision'
 
     def name(self):
         """This is the provired full name.
         """
-        return 'Hqgis'
+        return 'ServiceAreaAntiCollision'
 
     def icon(self):
         """We return the default icon.

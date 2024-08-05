@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HqgisDialogBase</class>
- <widget class="QDialog" name="HqgisDialogBase">
+ <class>ServiceAreaAntiCollisionDialogBase</class>
+ <widget class="QDialog" name="ServiceAreaAntiCollisionDialogBase">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Hqgis</string>
+   <string> Service Area Anti Collision</string>
   </property>
   <property name="modal">
    <bool>false</bool>
@@ -1805,7 +1805,7 @@
   <connection>
    <sender>button_box</sender>
    <signal>rejected()</signal>
-   <receiver>HqgisDialogBase</receiver>
+   <receiver>ServiceAreaAntiCollisionDialogBase</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1821,7 +1821,7 @@
   <connection>
    <sender>button_box</sender>
    <signal>accepted()</signal>
-   <receiver>HqgisDialogBase</receiver>
+   <receiver>ServiceAreaAntiCollisionDialogBase</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">

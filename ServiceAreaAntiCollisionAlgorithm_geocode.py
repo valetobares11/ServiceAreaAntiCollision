@@ -16,14 +16,11 @@ from PyQt5.QtNetwork import (QNetworkReply,
                              QNetworkAccessManager,
                              QNetworkRequest)
 from qgis.core import (QgsProcessing,
-                       QgsProject,
                        QgsFeatureSink,
                        QgsProcessingParameterField,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterEnum,
-                       QgsProcessingParameterNumber,
                        QgsProcessingParameterField,
                        QgsProcessingParameterFeatureSink,
                        QgsNetworkAccessManager,
@@ -31,16 +28,13 @@ from qgis.core import (QgsProcessing,
                        QgsFields,
                        QgsWkbTypes,
                        QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform,
                        QgsFeature,
                        QgsGeometry,
-                       QgsUnitTypes,
                        QgsPointXY,
                        QgsSettings)
 from functools import partial
-from .mapCat import mapCategories
 import processing
-import Hqgis
+from . import serviceAreaAntiCollision
 import os
 import requests
 import json
@@ -48,7 +42,7 @@ import time
 import urllib
 
 
-class getPois(QgsProcessingAlgorithm):
+class geocodeList(QgsProcessingAlgorithm):
     def __init__(self):
         super().__init__()
 
@@ -71,9 +65,7 @@ class getPois(QgsProcessingAlgorithm):
 
     INPUT = 'INPUT'
     OUTPUT = 'OUTPUT'
-    KEYS = 'KEYS'
-    MODES = 'MODES'
-    RADIUS = 'RADIUS'
+    AddressField = 'Address Field'
 
     def tr(self, string):
         """
@@ -92,21 +84,21 @@ class getPois(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'getPOIsForPoints'
+        return 'geocodeFieldAddress'
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Get POIs around Points')
+        return self.tr('Geocode List')
 
     def group(self):
         """
         Returns the name of the group this algorithm belongs to. This string
         should be localised.
         """
-        return self.tr('POIs')
+        return self.tr('geocode')
 
     def groupId(self):
         """
@@ -116,17 +108,16 @@ class getPois(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'POIs'
+        return 'geocode'
 
     def shortHelpString(self):
         """
         Returns a localised short helper string for the algorithm. This string
         should provide a basic description about what the algorithm does and the
-        parameters and outputs associated with it..
+        parameters and outputs associated with it.
         """
         return self.tr(
-            """This processing algorithm supports POI search for different categories for a set of points.<br>
-         The complete list of categories can be found on <a href='https://github.com/riccardoklinger/Hqgis/blob/master/categories.md'>github</a>.<br> Make sure your HERE credentials are stored in the QGIS global settings using the plugin itself. Please read the referenced <a href='https://github.com/riccardoklinger/Hqgis#tos--usage'>Terms of Usage</a> prior usage.""")
+            "This processing algorithm supports geocoding of a list of addresses in a single field originating from a txt/csv/table.<br> Make sure your HERE credentials are stored in the QGIS global settings using the plugin itself. Please read the referenced <a href='https://github.com/riccardoklinger/Hqgis#tos--usage'>Terms of Usage</a> prior usage")
 
     def loadCredFunctionAlg(self):
         import json
@@ -155,118 +146,23 @@ class getPois(QgsProcessingAlgorithm):
         """
 
         # We add the input vector features source. It can have any kind of
-        # point.
+        # geometry.
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
-                self.tr('Input Point Layer'),
-                [QgsProcessing.TypeVectorPoint]
+                self.tr('Input table'),
+                [QgsProcessing.TypeVector]
             )
         )
-        self.keys = [
-            "Administrative Region-Streets",
-            "Airport",
-            "ATM",
-            "Banking",
-            "Body of Water",
-            "Bookstore",
-            "Building",
-            "Business-Industry",
-            "Car Dealer-Sales",
-            "Car Rental",
-            "Car Repair-Service",
-            "Cargo Transportation",
-            "Cinema",
-            "City, Town or Village",
-            "Clothing and Accessories",
-            "Coffee-Tea",
-            "Commercial Services",
-            "Communication-Media",
-            "Consumer Goods",
-            "Consumer Services",
-            "Convenience Store",
-            "Department Store",
-            "Drugstore or Pharmacy",
-            "Education Facility",
-            "Electronics",
-            "Event Spaces",
-            "Facilities",
-            "Food and Drink",
-            "Forest,Heath or Other Vegetation",
-            "Fueling Station",
-            "Government or Community Facility",
-            "Hair and Beauty",
-            "Hardware, House and Garden",
-            "Hospital or Health Care Facility",
-            "Hotel-Motel",
-            "Landmark-Attraction",
-            "Leisure",
-            "Library",
-            "Lodging",
-            "Mall-Shopping Complex",
-            "Money-Cash Services",
-            "Mountain or Hill",
-            "Museum",
-            "Natural and Geographical",
-            "Nightlife-Entertainment",
-            "Outdoor Area-Complex",
-            "Outdoor-Recreation",
-            "Parking",
-            "Police-Fire-Emergency",
-            "Post Office",
-            "Public Transport",
-            "Religious Place",
-            "Rest Area",
-            "Restaurant",
-            "Sports Facility-Venue",
-            "Theatre, Music and Culture",
-            "Tourist Information",
-            "Truck-Semi Dealer-Services",
-            "Undersea Feature"
-        ]
-        self.keys2 = []
-        for entry in self.keys:
-            self.keys2.append(entry)
         self.addParameter(
-            QgsProcessingParameterEnum(
-                self.KEYS,
-                self.tr("POI Categories"),
-                options=self.keys2,
-                # defaultValue=0,
-                optional=False,
-                allowMultiple=True,
+            QgsProcessingParameterField(
+                self.AddressField,
+                self.tr('Address Field'),
+                parentLayerParameterName=self.INPUT,
+                type=QgsProcessingParameterField.String
+
             )
         )
-        # self.modes = [
-        #    "walk", #indicates that the user is on foot.
-        #    "drive", #indicates that the user is driving.
-        #    "public_transport", #indicates that the user is on public transport.
-        #    "bicycle", #indicates that the user is on bicycle.
-        #    "none" #if the user is neither on foot nor driving.
-        # ]
-        # self.addParameter(
-        #    QgsProcessingParameterEnum(
-        #        self.MODES,
-        #        self.tr('Traffic Mode'),
-        #        options=self.modes,
-        #        #defaultValue=0,
-        #        optional=False,
-        #        allowMultiple=False
-        #    )
-        # )
-        # self.addParameter(
-        #    QgsProcessingParameterNumber(
-        #        self.RADIUS,
-        #        self.tr('Radius around Points [m]'),
-        # parentParameterName=self.INPUT,
-        # options=self.keys,
-        #        defaultValue=100,
-        #        minValue=1,
-        #        maxValue=100000,
-        #    defaultUnit="DistanceMeters",
-        #        optional=False,
-        #    )#.setDefaultUnit(QgsUnitTypes.DistanceMeters)
-        # )
 
         # We add a feature sink in which to store our processed features (this
         # usually takes the form of a newly created vector layer when the
@@ -274,73 +170,85 @@ class getPois(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
-                self.tr('POI layer')
+                self.tr('Geocoded Addresses')
             )
         )
 
     def convertGeocodeResponse(self, responseAddress):
         geocodeResponse = {}
         try:
-            geocodeResponse["Label"] = responseAddress["Location"]["Address"]["Label"]
+            geocodeResponse["Label"] = responseAddress["address"]["label"]
         except BaseException:
             geocodeResponse["Label"] = ""
         try:
-            geocodeResponse["Country"] = responseAddress["Location"]["Address"]["Country"]
+            geocodeResponse["Country"] = responseAddress["address"]["country"]
         except BaseException:
             geocodeResponse["Country"] = ""
         try:
-            geocodeResponse["State"] = responseAddress["Location"]["Address"]["State"]
+            geocodeResponse["State"] = responseAddress["address"]["state"]
         except BaseException:
             geocodeResponse["State"] = ""
         try:
-            geocodeResponse["County"] = responseAddress["Location"]["Address"]["County"]
+            geocodeResponse["County"] = responseAddress["address"]["county"]
         except BaseException:
             geocodeResponse["County"] = ""
         try:
-            geocodeResponse["City"] = responseAddress["Location"]["Address"]["City"]
+            geocodeResponse["City"] = responseAddress["address"]["city"]
         except BaseException:
             geocodeResponse["City"] = ""
         try:
-            geocodeResponse["District"] = responseAddress["Location"]["Address"]["District"]
+            geocodeResponse["District"] = responseAddress["address"][
+                "district"
+            ]
         except BaseException:
             geocodeResponse["District"] = ""
         try:
-            geocodeResponse["Street"] = responseAddress["Location"]["Address"]["Street"]
+            geocodeResponse["Street"] = responseAddress["address"]["street"]
         except BaseException:
             geocodeResponse["Street"] = ""
         try:
-            geocodeResponse["HouseNumber"] = responseAddress["Location"]["Address"]["HouseNumber"]
+            geocodeResponse["HouseNumber"] = responseAddress["address"][
+                "houseNumber"
+            ]
         except BaseException:
             geocodeResponse["HouseNumber"] = ""
         try:
-            geocodeResponse["PostalCode"] = responseAddress["Location"]["Address"]["PostalCode"]
+            geocodeResponse["PostalCode"] = responseAddress["address"][
+                "postalCode"
+            ]
         except BaseException:
             geocodeResponse["PostalCode"] = ""
         try:
-            geocodeResponse["Relevance"] = responseAddress["Relevance"]
+            geocodeResponse["Relevance"] = responseAddress["scoring"]["queryScore"]
         except BaseException:
             geocodeResponse["Relevance"] = None
         try:
-            geocodeResponse["CountryQuality"] = responseAddress["MatchQuality"]["Country"]
+            geocodeResponse["CountryQuality"] = responseAddress["scoring"]["fieldscore"][
+                "country"
+            ]
         except BaseException:
             geocodeResponse["CountryQuality"] = None
         try:
-            geocodeResponse["CityQuality"] = responseAddress["MatchQuality"]["City"]
+            geocodeResponse["CityQuality"] = responseAddress["scoring"]["fieldscore"]["city"]
         except BaseException:
             geocodeResponse["CityQuality"] = None
         try:
-            geocodeResponse["StreetQuality"] = responseAddress["MatchQuality"]["Street"][0]
+            geocodeResponse["StreetQuality"] = responseAddress["scoring"]["fieldscore"][
+                "street"
+            ][0]
         except BaseException:
             geocodeResponse["StreetQuality"] = None
         try:
-            geocodeResponse["NumberQuality"] = responseAddress["MatchQuality"]["HouseNumber"]
+            geocodeResponse["NumberQuality"] = responseAddress["scoring"]["fieldscore"][
+                "houseNumber"
+            ]
         except BaseException:
             geocodeResponse["NumberQuality"] = None
         try:
-            geocodeResponse["MatchType"] = responseAddress["MatchType"]
+            geocodeResponse["MatchType"] = responseAddress["resultType"]
         except BaseException:
             geocodeResponse["MatchType"] = ""
-        return(geocodeResponse)
+        return geocodeResponse
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -355,28 +263,12 @@ class getPois(QgsProcessingAlgorithm):
             self.INPUT,
             context
         )
-        # allow only regular point layers. no Multipoints
-        if (source.wkbType() == 4
-            or source.wkbType() == 1004
-                or source.wkbType() == 3004):
-            raise QgsProcessingException(
-                "MultiPoint layer is not supported!")
-        # radius = self.parameterAsString(
-        #    parameters,
-        #    self.RADIUS,
-        #    context
-        # )
-        # mode = self.parameterAsEnum(
-        #    parameters,
-        #    self.MODES,
-        #    context
-        # )
-        categories = self.parameterAsEnums(
+        addressField = self.parameterAsString(
             parameters,
-            self.KEYS,
+            self.AddressField,
             context
         )
-        # feedback.pushInfo(addressField)
+        feedback.pushInfo(addressField)
 
         # If source was not found, throw an exception to indicate that the algorithm
         # encountered a fatal error. The exception text can be any string, but in this
@@ -388,12 +280,25 @@ class getPois(QgsProcessingAlgorithm):
                     parameters, self.INPUT))
 
         fields = QgsFields()
-        fields.append(QgsField("id", QVariant.String))
-        fields.append(QgsField("origin_id", QVariant.Int))
-        fields.append(QgsField("title", QVariant.String))
-        fields.append(QgsField("label", QVariant.String))
-        fields.append(QgsField("distance", QVariant.Double))
-        fields.append(QgsField("categories", QVariant.String))
+        fields.append(QgsField("id", QVariant.Int))
+        fields.append(QgsField("oldAddress", QVariant.String))
+        fields.append(QgsField("lat", QVariant.Double))
+        fields.append(QgsField("lng", QVariant.Double))
+        fields.append(QgsField("address", QVariant.String))
+        fields.append(QgsField("country", QVariant.String))
+        fields.append(QgsField("state", QVariant.String))
+        fields.append(QgsField("county", QVariant.String))
+        fields.append(QgsField("city", QVariant.String))
+        fields.append(QgsField("district", QVariant.String))
+        fields.append(QgsField("street", QVariant.String))
+        fields.append(QgsField("number", QVariant.String))
+        fields.append(QgsField("zip", QVariant.String))
+        fields.append(QgsField("relevance", QVariant.Double))
+        fields.append(QgsField("qu_country", QVariant.Double))
+        fields.append(QgsField("qu_city", QVariant.Double))
+        fields.append(QgsField("qu_street", QVariant.Double))
+        fields.append(QgsField("qu_number", QVariant.Double))
+        fields.append(QgsField("matchtype", QVariant.String))
         (sink, dest_id) = self.parameterAsSink(
             parameters,
             self.OUTPUT,
@@ -402,10 +307,12 @@ class getPois(QgsProcessingAlgorithm):
             QgsWkbTypes.Point,
             QgsCoordinateReferenceSystem(4326)
         )
+
         # Send some information to the user
         feedback.pushInfo(
-            '{} points for POI finding'.format(
+            '{} addresses to geocode'.format(
                 source.featureCount()))
+
         # If sink was not created, throw an exception to indicate that the algorithm
         # encountered a fatal error. The exception text can be any string, but in this
         # case we use the pre-built invalidSinkError method to return a standard
@@ -421,71 +328,45 @@ class getPois(QgsProcessingAlgorithm):
         features = source.getFeatures()
         # get the keys:
         creds = self.loadCredFunctionAlg()
-        # convert categories to list for API call:
-        categoriesList = []
-        # self.keys[keyField].split(" | ")[1]
-        for category in categories:
-            feedback.pushInfo(self.keys[category])
-            categoriesList.append(mapCategories(self.keys[category]))
-        categories = ",".join(categoriesList)
-        #for category in categories:
-        #    categoryID = mapCategories(category)
-        #    categoriesList.append(categoryID)
-        #categories = ",".join(categoriesList)
-        layerCRS = source.sourceCrs()
-        if layerCRS != QgsCoordinateReferenceSystem(4326):
-            sourceCrs = source.sourceCrs()
-            destCrs = QgsCoordinateReferenceSystem(4326)
-            tr = QgsCoordinateTransform(
-                sourceCrs, destCrs, QgsProject.instance())
         for current, feature in enumerate(features):
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
                 break
-            # convert coordinates:
-            if layerCRS != QgsCoordinateReferenceSystem(4326):
-                # we reproject:
-                geom = feature.geometry()
-                newGeom = tr.transform(geom.asPoint())
-                x = newGeom.x()
-                y = newGeom.y()
-            else:
-                x = feature.geometry().asPoint().x()
-                y = feature.geometry().asPoint().y()
-            coordinates = str(y) + "," + str(x)
-            # get the location from the API:
-            header = {"referer": "HQGIS"}
-            ApiUrl = 'https://browse.search.hereapi.com/v1/browse?at=' + coordinates + \
-                "&categories=" + categories + "&limit=100&apiKey=" + creds["id"]
-            feedback.pushInfo('calling Url {}'.format(ApiUrl))
-            r = requests.get(ApiUrl, headers=header)
 
-            responsePlaces = json.loads(r.text)["items"]
-            for place in responsePlaces:
-                lat = place["position"]["lat"]
-                lng = place["position"]["lng"]
-                # iterate over categories:
-                
-                categoriesResp = []
-                
-                fet = QgsFeature()
-                fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(lng, lat)))
-                fet.setAttributes([
-                    place["id"],
-                    feature.id(),
-                    place["title"],
-                    place["address"]["label"],
-                    place["distance"],
-                    ";".join(categoriesResp)
-                ])
-                sink.addFeature(fet, QgsFeatureSink.FastInsert)
-            #lat = responseAddress["Location"]["DisplayPosition"]["Latitude"]
-            #lng = responseAddress["Location"]["DisplayPosition"]["Longitude"]
+            # get the location from the API:
+            ApiUrl = "https://geocode.search.hereapi.com/v1/geocode?apiKey=" + \
+                creds["id"] + "&q=" + feature[addressField]
+            r = requests.get(ApiUrl)
+            responseAddress = json.loads(r.text)["items"][0]
+            geocodeResponse = self.convertGeocodeResponse(responseAddress)
+            lat = responseAddress["position"]["lat"]
+            lng = responseAddress["position"]["lng"]
             # Add a feature in the sink
             # feedback.pushInfo(str(lat))
-
-            # fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(lng,lat)))
-            # fet.setAttributes([
+            fet = QgsFeature()
+            fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(lng, lat)))
+            fet.setAttributes([
+                feature.id(),
+                feature[addressField],
+                lat,
+                lng,
+                geocodeResponse["Label"],
+                geocodeResponse["Country"],
+                geocodeResponse["State"],
+                geocodeResponse["County"],
+                geocodeResponse["City"],
+                geocodeResponse["District"],
+                geocodeResponse["Street"],
+                geocodeResponse["HouseNumber"],
+                geocodeResponse["PostalCode"],
+                geocodeResponse["Relevance"],
+                geocodeResponse["CountryQuality"],
+                geocodeResponse["CityQuality"],
+                geocodeResponse["StreetQuality"],
+                geocodeResponse["NumberQuality"],
+                geocodeResponse["MatchType"]
+            ])
+            sink.addFeature(fet, QgsFeatureSink.FastInsert)
 
             # Update the progress bar
             feedback.setProgress(int(current * total))
@@ -496,6 +377,17 @@ class getPois(QgsProcessingAlgorithm):
         # to the executed algorithm, and that the executed algorithm can send feedback
         # reports to the user (and correctly handle cancelation and progress
         # reports!)
+        if False:
+            buffered_layer = processing.run("native:buffer", {
+                'INPUT': dest_id,
+                'DISTANCE': 1.5,
+                'SEGMENTS': 5,
+                'END_CAP_STYLE': 0,
+                'JOIN_STYLE': 0,
+                'MITER_LIMIT': 2,
+                'DISSOLVE': False,
+                'OUTPUT': 'memory:'
+            }, context=context, feedback=feedback)['OUTPUT']
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

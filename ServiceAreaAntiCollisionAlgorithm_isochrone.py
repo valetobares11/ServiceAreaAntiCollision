@@ -39,13 +39,12 @@ from qgis.core import (
 from .decodeGeom import decode
 from functools import partial
 from datetime import datetime
-import Hqgis
+from . import serviceAreaAntiCollision
 import os
 import requests
 import json
 import time
 import urllib
-
 
 class isochroneList(QgsProcessingAlgorithm):
     def __init__(self):

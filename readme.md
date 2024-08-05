@@ -1,6 +1,6 @@
-# Hqgis
-Hqgis is a python based plugin for QGIS that offers access to the [HERE API](https://developer.here.com/) and combines different traffic/routing/geocoding actions in one plugin.
-With Hqgis you can geocode single and multiple addresses, find routes, places of interests around a or multiple locations and many more.
+# ServiceAreaAntiCollision
+ ServiceAreaAntiCollision is a python based plugin for QGIS that offers access to the [HERE API](https://developer.here.com/) and combines different traffic/routing/geocoding actions in one plugin.
+With ServiceAreaAntiCollision you can geocode single and multiple addresses, find routes, places of interests around a or multiple locations and many more.
 This plugin is designed to work in QGIS 3.4 and above.
 
 ## Sponsors
@@ -8,19 +8,19 @@ Thank you:
 @zoefSmoelt 
 
 ## Contents and Usage
-The Hqgis plugin comes with different analytical tools as the HERE API povides different endpoints:
+The ServiceAreaAntiCollision plugin comes with different analytical tools as the HERE API povides different endpoints:
 + Geocode
 
    With the three tools you can geocode a single address, choose a point layer / delimited layer with an address field or a layer with dedicated address-content fields (like street, city, zip code, etc.). You will receive a single point memory layer with found addresses, quality indicators and the original searched address/address content.
-   ![Geocoding Tab Hqgis](https://i.imgur.com/f1KV0NL.png)
+   ![Geocoding Tab ServiceAreaAntiCollision](https://i.imgur.com/f1KV0NL.png)
 + Routing
 
    Currently the toolset supports one-to-one routing ("manual input") using different routing types (fast, short, balanced) and routing modes (pedestrian, bicycle, car, ...). The reuslt will be added as a memory layer to your QGIS project.
-   ![Routing Tab Hqgis](https://i.imgur.com/vJZQSFn.png)
+   ![Routing Tab ServiceAreaAntiCollision](https://i.imgur.com/vJZQSFn.png)
 + POI search
 
    Using the POI search you can query the HERE API for places of interest around an address/coordinate pair in a given vicinity (radius). The API will respond with a maximum of 100 search results in the categories you queried.
-   ![POI Search Tab Hqgis](https://i.imgur.com/7ALhD7e.png)
+   ![POI Search Tab ServiceAreaAntiCollision](https://i.imgur.com/7ALhD7e.png)
 
 + Isochrone Analysis
 
@@ -36,9 +36,9 @@ If you want to use it in QGIS, please download the repository and place the cont
 The plugin needs to have credentials from HERE. Therefore you need to register at least a freemium account (free of charge at [HERE.com](https://developer.here.com/) by creating a project and generate a REST API Key if not already generated.
 Fill in the generated API Key in the credentials-tab of the plugin and click on "save credentials".
 
-![Credential Tab Hqgis](https://i.imgur.com/IPvR5LV.png)
+![Credential Tab ServiceAreaAntiCollision](https://i.imgur.com/IPvR5LV.png)
 
-The credentials will be stored for convenience in a file called credentials.json in the *creds* subfolder of your Hqgis plugin folder (linux: */home/USER/.local/share/QGIS/QGIS3/profiles/default/python/plugins* / win: *C:\Users\USER\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins*).
+The credentials will be stored for convenience in a file called credentials.json in the *creds* subfolder of your  ServiceAreaAntiCollision plugin folder (linux: */home/USER/.local/share/QGIS/QGIS3/profiles/default/python/plugins* / win: *C:\Users\USER\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins*).
 
 ## TOS / Usage
 Please take a look at the [*Terms and Contitions*](https://developer.here.com/terms-and-conditions) when using the Freemium plan (as most people might want to...).
