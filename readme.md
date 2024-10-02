@@ -1,50 +1,23 @@
-# ServiceAreaAntiCollision
- ServiceAreaAntiCollision is a python based plugin for QGIS that offers access to the [HERE API](https://developer.here.com/) and combines different traffic/routing/geocoding actions in one plugin.
-With ServiceAreaAntiCollision you can geocode single and multiple addresses, find routes, places of interests around a or multiple locations and many more.
-This plugin is designed to work in QGIS 3.4 and above.
+Service Area Anti Collision v0.1
+==========
 
-## Sponsors
-Thank you: 
-@zoefSmoelt 
+(C) 2023-2024 by Alvarez Yanina, Gaspero Maximiliano, Tobares Valentin
 
-## Contents and Usage
-The ServiceAreaAntiCollision plugin comes with different analytical tools as the HERE API povides different endpoints:
-+ Geocode
+yanialva2009@gmail.com,
+maxigaspero@gmail.com, 
+valetobares11@gmail.com
 
-   With the three tools you can geocode a single address, choose a point layer / delimited layer with an address field or a layer with dedicated address-content fields (like street, city, zip code, etc.). You will receive a single point memory layer with found addresses, quality indicators and the original searched address/address content.
-   ![Geocoding Tab ServiceAreaAntiCollision](https://i.imgur.com/f1KV0NL.png)
-+ Routing
+###Description
+Service Area Anti Collision calculates the maximum coverage area without collision for a particular distribution of installations. It provides as a result the percentage of maximum coverage, the attention time from each facility and the graphical representation of these areas.
 
-   Currently the toolset supports one-to-one routing ("manual input") using different routing types (fast, short, balanced) and routing modes (pedestrian, bicycle, car, ...). The reuslt will be added as a memory layer to your QGIS project.
-   ![Routing Tab ServiceAreaAntiCollision](https://i.imgur.com/vJZQSFn.png)
-+ POI search
+###Installation requirements
+1. Have installed QGIS 3
+2. PyQt5 (pip install PyQt5)
+3. requests (pip install requests)
+4. Add a file called “apikey.py” with the constant APIKEY (HERE service key)
 
-   Using the POI search you can query the HERE API for places of interest around an address/coordinate pair in a given vicinity (radius). The API will respond with a maximum of 100 search results in the categories you queried.
-   ![POI Search Tab ServiceAreaAntiCollision](https://i.imgur.com/7ALhD7e.png)
+###Installation
 
-+ Isochrone Analysis
-
-   Isochrones, or lines of equal (travel) times are possible to calculated using different modes and types as well as for different times of the day. This can be done on a single address/map point or using a point layer. The result will be color coded (categorized) in QGIS in red (long travel times/distances) to grenn (short travel times/distances). Find some nice examples at [Topi Tjukanovs Homepage](https://tjukanov.org/vintage-isochrones/).  
-   ![Isochrones in HQGIS](https://i.imgur.com/pX9qEeJ.png)
-
-
-## Installation
-Currently the plugin is only hosted here on github as the version is premature.
-If you want to use it in QGIS, please download the repository and place the content of the zip in your python plugins folder (linux: */home/USER/.local/share/QGIS/QGIS3/profiles/default/python/plugins* / win: *C:\Users\USER\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins*). You can also install it directly in QGIS using the [plugin from ZIP option](https://gis.stackexchange.com/questions/302196/downloading-and-saving-plugins-for-qgis-3-4)
-
-## Credentials
-The plugin needs to have credentials from HERE. Therefore you need to register at least a freemium account (free of charge at [HERE.com](https://developer.here.com/) by creating a project and generate a REST API Key if not already generated.
-Fill in the generated API Key in the credentials-tab of the plugin and click on "save credentials".
-
-![Credential Tab ServiceAreaAntiCollision](https://i.imgur.com/IPvR5LV.png)
-
-The credentials will be stored for convenience in a file called credentials.json in the *creds* subfolder of your  ServiceAreaAntiCollision plugin folder (linux: */home/USER/.local/share/QGIS/QGIS3/profiles/default/python/plugins* / win: *C:\Users\USER\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins*).
-
-## TOS / Usage
-Please take a look at the [*Terms and Contitions*](https://developer.here.com/terms-and-conditions) when using the Freemium plan (as most people might want to...).
-Furthermore:
-According to the [*Acceptable Use Policy*](https://legal.here.com/en-gb/terms/acceptable-use-policy) you're not allowed to store the results. Yet you can use them *cached* aka work with the memory layer for 30 days max.
-Further Questions and Answers can be found at the [*FAQ*](https://developer.here.com/faqs) page as well as the [main page of the freemium model](https://go.engage.here.com/freemium).
-
-## Known Limitations
-The plugin is using the [requests module](http://docs.python-requests.org/en/master/) at the current stage and is not respecting any proxy settings from QGIS.
+1. Download the project and unzip it.
+2. Change the plugin folder name to Hqgis. 
+3. Copy this folder to QGIS plugins folder (eg. /home/user/.local/share/QGIS/QGIS3/profiles/default/python/plugins/)
